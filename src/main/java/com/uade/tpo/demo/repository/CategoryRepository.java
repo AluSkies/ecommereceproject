@@ -11,9 +11,9 @@ public class CategoryRepository {
 
     public CategoryRepository() {
         categories = new ArrayList<Category>(
-                Arrays.asList(Category.builder().description("Deportivos").id(1).build(),
-                        Category.builder().description("Inteligentes").id(2).build(),
-                        Category.builder().description("de lujo").id(3).build()));
+            Arrays.asList(new Category(1, "Deportivos"),
+                new Category(2, "Inteligentes"),
+                new Category(3, "de lujo")));
     }
 
     public ArrayList<Category> getCategories() {
@@ -25,9 +25,7 @@ public class CategoryRepository {
     }
 
     public Category createCategory(int newCategoryId, String description) {
-        Category newCategory = Category.builder()
-                .description(description)
-                .id(newCategoryId).build();
+        Category newCategory = new Category(newCategoryId, description);
         this.categories.add(newCategory);
         return newCategory;
     }

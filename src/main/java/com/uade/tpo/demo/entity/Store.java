@@ -12,6 +12,9 @@ public class Store {
     private String direccion;
     private String estado;
 
+    public Store() {
+    }
+
     public Store(String nombre, String direccion, String estado) {
         this.nombre = nombre;
         this.direccion = direccion;
