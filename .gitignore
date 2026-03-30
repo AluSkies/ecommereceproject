@@ -12,6 +12,9 @@ target/
 .settings
 .springBeans
 .sts4-cache
+!.settings/
+.settings/*
+!.settings/org.eclipse.jdt.core.prefs
 
 ### IntelliJ IDEA ###
 .idea
