@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.uade.tpo.demo.catalogservice.domain.ProductStatus;
 import com.uade.tpo.demo.catalogservice.domain.WatchCategory;
 import com.uade.tpo.demo.catalogservice.dto.ProductRequest;
 import com.uade.tpo.demo.catalogservice.dto.ProductResponse;
@@ -161,5 +162,75 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> getActiveProducts() {
         List<ProductResponse> products = productService.getActiveProducts();
         return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Get available products (active and in stock)
+     * GET /api/v1/products/available
+     */
+    @GetMapping("/available")
+    public ResponseEntity<List<ProductResponse>> getAvailableProducts() {
+        List<ProductResponse> products = productService.getAvailableProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Get available products by category
+     * GET /api/v1/products/available/category?category=LUXURY
+     */
+    @GetMapping("/available/category")
+    public ResponseEntity<List<ProductResponse>> getAvailableByCategory(
+        @RequestParam WatchCategory category) {
+        List<ProductResponse> products = productService.getAvailableByCategory(category);
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Search products by price range
+     * GET /api/v1/products/search/price?minPrice=100&maxPrice=5000
+     */
+    @GetMapping("/search/price")
+    public ResponseEntity<List<ProductResponse>> searchByPriceRange(
+        @RequestParam BigDecimal minPrice,
+        @RequestParam BigDecimal maxPrice) {
+        List<ProductResponse> products = productService.searchByPriceRange(minPrice, maxPrice);
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Get low stock products
+     * GET /api/v1/products/inventory/low-stock?threshold=10
+     */
+    @GetMapping("/inventory/low-stock")
+    public ResponseEntity<List<ProductResponse>> getLowStockProducts(
+        @RequestParam(defaultValue = "10") int threshold) {
+        List<ProductResponse> products = productService.getLowStockProducts(threshold);
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Get out of stock products
+     * GET /api/v1/products/inventory/out-of-stock
+     */
+    @GetMapping("/inventory/out-of-stock")
+    public ResponseEntity<List<ProductResponse>> getOutOfStockProducts() {
+        List<ProductResponse> products = productService.getOutOfStockProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Update product status
+     * PATCH /api/v1/products/{id}/status
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ProductResponse> updateProductStatus(
+        @PathVariable Integer id,
+        @RequestParam ProductStatus status) {
+        try {
+            ProductResponse updated = productService.updateProductStatus(id, status);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

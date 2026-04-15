@@ -172,6 +172,63 @@ public class ProductService {
     }
 
     /**
+     * Get available products (active status and stock > 0)
+     */
+    public List<ProductResponse> getAvailableProducts() {
+        return productRepository.findAvailableProducts().stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Get available products in a category
+     */
+    public List<ProductResponse> getAvailableByCategory(WatchCategory category) {
+        return productRepository.findAvailableByCategory(category).stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Search products by price range
+     */
+    public List<ProductResponse> searchByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        return productRepository.findByPriceRange(minPrice, maxPrice).stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Get products with low stock (available quantity <= threshold)
+     */
+    public List<ProductResponse> getLowStockProducts(int threshold) {
+        return productRepository.findLowStockProducts(threshold).stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Get products out of stock
+     */
+    public List<ProductResponse> getOutOfStockProducts() {
+        return productRepository.findOutOfStockProducts().stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Update product status (activate, deactivate, discontinue, etc.)
+     */
+    public ProductResponse updateProductStatus(Integer id, ProductStatus newStatus) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+
+        product.setProductStatus(newStatus);
+        Product updated = productRepository.save(product);
+        return toResponse(updated);
+    }
+
+    /**
      * Convert Product entity to ProductResponse DTO
      */
     private ProductResponse toResponse(Product product) {
