@@ -39,7 +39,7 @@ class CartServiceTest {
     private Cart activeCart;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         productRolex = ProductResponse.builder()
             .id(1)
             .sku("ROLEX-001")
@@ -80,7 +80,7 @@ class CartServiceTest {
                 return c;
             });
 
-            CartResponse resp = cartService.addItem(req);
+            CartResponse resp = cartService.addToCart(req);
 
             assertThat(resp.getCustomerId()).isEqualTo(42);
             assertThat(resp.getStatus()).isEqualTo(CartStatus.ACTIVE);
@@ -101,7 +101,7 @@ class CartServiceTest {
             when(cartRepository.findActiveByCustomerId(42)).thenReturn(Optional.of(activeCart));
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            CartResponse resp = cartService.addItem(req);
+            CartResponse resp = cartService.addToCart(req);
 
             assertThat(resp.getItems()).hasSize(1);
             assertThat(resp.getItems().get(0).getQuantity()).isEqualTo(5); // 3 + 2
@@ -113,7 +113,7 @@ class CartServiceTest {
             AddToCartRequest req = buildRequest(42, null, 99, 1);
             when(productService.getProductById(99)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.addItem(req))
+            assertThatThrownBy(() -> cartService.addToCart(req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("99");
         }
@@ -125,7 +125,7 @@ class CartServiceTest {
             AddToCartRequest req = buildRequest(42, null, 1, 5);
             when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
 
-            assertThatThrownBy(() -> cartService.addItem(req))
+            assertThatThrownBy(() -> cartService.addToCart(req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Stock insuficiente");
         }
@@ -136,9 +136,9 @@ class CartServiceTest {
             AddToCartRequest reqZero = buildRequest(42, null, 1, 0);
             AddToCartRequest reqNeg  = buildRequest(42, null, 1, -1);
 
-            assertThatThrownBy(() -> cartService.addItem(reqZero))
+            assertThatThrownBy(() -> cartService.addToCart(reqZero))
                 .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> cartService.addItem(reqNeg))
+            assertThatThrownBy(() -> cartService.addToCart(reqNeg))
                 .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -155,7 +155,7 @@ class CartServiceTest {
                 return c;
             });
 
-            CartResponse resp = cartService.addItem(req);
+            CartResponse resp = cartService.addToCart(req);
 
             assertThat(resp.getGuestToken()).isEqualTo("guest-token-abc");
             assertThat(resp.getCustomerId()).isNull();
@@ -167,7 +167,7 @@ class CartServiceTest {
             AddToCartRequest req = buildRequest(null, null, 1, 1);
             when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
 
-            assertThatThrownBy(() -> cartService.addItem(req))
+            assertThatThrownBy(() -> cartService.addToCart(req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("customerId");
         }
@@ -275,7 +275,7 @@ class CartServiceTest {
         void throwsWhenCartNotFound() {
             when(cartRepository.findById(999)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.getCart(999))
+            assertThatThrownBy(() -> cartService.getCartById(999))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("999");
         }
@@ -302,7 +302,7 @@ class CartServiceTest {
             when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
             when(productService.getProductById(2)).thenReturn(Optional.of(seiko));
 
-            CartResponse resp = cartService.getCart(1);
+            CartResponse resp = cartService.getCartById(1);
 
             // 2 * 9500 + 1 * 450 = 19450
             assertThat(resp.getSubtotal()).isEqualByComparingTo(new BigDecimal("19450.00"));
@@ -313,7 +313,7 @@ class CartServiceTest {
         void subtotalIsZeroForEmptyCart() {
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
 
-            CartResponse resp = cartService.getCart(1);
+            CartResponse resp = cartService.getCartById(1);
             assertThat(resp.getSubtotal()).isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
