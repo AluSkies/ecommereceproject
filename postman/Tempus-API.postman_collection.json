@@ -1,0 +1,772 @@
+{
+  "info": {
+    "_postman_id": "7a1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e",
+    "name": "Tempus API",
+    "description": "Colección completa de la API Tempus (e-commerce de relojería, UADE).\n\n## Variables de la colección\n- `baseUrl`: http://localhost:4002\n- `authToken`: se captura automáticamente al ejecutar Login\n- `cartId`, `productId`, `orderId`, `discountId`: IDs reusables\n\n## Cómo usar\n1. Arrancá la app (`./mvnw spring-boot:run`) y MySQL (`docker start tempus-mysql`).\n2. Ejecutá **Auth > Login Buyer** o **Login Admin**. El script post-response guarda el token en `{{authToken}}`.\n3. Los endpoints protegidos usan `Authorization: Bearer {{authToken}}` automáticamente.\n4. Para probar 401/403, corré un endpoint protegido tras limpiar la variable (botón de eye→edit).\n\n## Usuarios seed\n- admin / admin123 (ROLE_ADMIN)\n- buyer1 / buyer123 (ROLE_BUYER)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4002", "type": "string" },
+    { "key": "authToken", "value": "", "type": "string" },
+    { "key": "productId", "value": "1", "type": "string" },
+    { "key": "cartId", "value": "1", "type": "string" },
+    { "key": "orderId", "value": "1", "type": "string" },
+    { "key": "discountId", "value": "1", "type": "string" },
+    { "key": "userId", "value": "2", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{authToken}}", "type": "string" } ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Registro, login y logout. Los endpoints son públicos salvo logout.",
+      "item": [
+        {
+          "name": "Register (new user)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser{{$timestamp}}\",\n  \"email\": \"newuser{{$timestamp}}@tempus.local\",\n  \"password\": \"test1234\",\n  \"name\": \"Nuevo\",\n  \"lastName\": \"Usuario\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201 creado', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "if (pm.response.code < 400) {",
+                  "    const body = pm.response.json();",
+                  "    if (body && body.token) {",
+                  "        pm.collectionVariables.set('authToken', body.token);",
+                  "        console.log('authToken guardado tras register');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve token', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('token');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.token) {",
+                  "    pm.collectionVariables.set('authToken', body.token);",
+                  "    console.log('authToken (admin) guardado');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Buyer",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"buyer1\",\n  \"password\": \"buyer123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body.token) {",
+                  "    pm.collectionVariables.set('authToken', body.token);",
+                  "    console.log('authToken (buyer) guardado');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (credenciales inválidas) — espera 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"buyer1\",\n  \"password\": \"WRONG\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 UNAUTHORIZED', function () { pm.response.to.have.status(401); });",
+                  "pm.test('código CREDENCIALES_INVALIDAS', function () {",
+                  "    pm.expect(pm.response.json().codigo).to.eql('CREDENCIALES_INVALIDAS');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products — Público",
+      "description": "Endpoints de catálogo sin auth requerida.",
+      "item": [
+        {
+          "name": "List all products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          }
+        },
+        {
+          "name": "Get product by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{productId}}"] }
+          }
+        },
+        {
+          "name": "Active products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/active", "host": ["{{baseUrl}}"], "path": ["api","v1","products","active"] }
+          }
+        },
+        {
+          "name": "Available products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/available", "host": ["{{baseUrl}}"], "path": ["api","v1","products","available"] }
+          }
+        },
+        {
+          "name": "Search by category",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/search/category?category=LUXURY",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","search","category"],
+              "query": [ { "key": "category", "value": "LUXURY", "description": "LUXURY | SPORT | VINTAGE | DRESS" } ]
+            }
+          }
+        },
+        {
+          "name": "Search by brand",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/search/brand?brandId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","search","brand"],
+              "query": [ { "key": "brandId", "value": "1" } ]
+            }
+          }
+        },
+        {
+          "name": "Search by name",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/search/name?q=rolex",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","search","name"],
+              "query": [ { "key": "q", "value": "rolex" } ]
+            }
+          }
+        },
+        {
+          "name": "Search by price range",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/search/price?minPrice=100&maxPrice=5000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","search","price"],
+              "query": [
+                { "key": "minPrice", "value": "100" },
+                { "key": "maxPrice", "value": "5000" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Low stock (<= threshold)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/inventory/low-stock?threshold=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","inventory","low-stock"],
+              "query": [ { "key": "threshold", "value": "10" } ]
+            }
+          }
+        },
+        {
+          "name": "Out of stock",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/inventory/out-of-stock", "host": ["{{baseUrl}}"], "path": ["api","v1","products","inventory","out-of-stock"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products — Admin",
+      "description": "CRUD de productos — requiere token con ROLE_ADMIN. Ejecutar primero 'Login Admin'.",
+      "item": [
+        {
+          "name": "Create product (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"TEST-{{$timestamp}}\",\n  \"name\": \"Reloj de prueba\",\n  \"slug\": \"reloj-prueba-{{$timestamp}}\",\n  \"description\": \"Creado desde Postman\",\n  \"price\": 299.99,\n  \"compareAtPrice\": 349.99,\n  \"stock\": 10,\n  \"category\": \"SPORT\",\n  \"brandId\": 1,\n  \"caliber\": \"Cuarzo\",\n  \"caseSize\": \"42mm\",\n  \"strapMaterial\": \"Acero\",\n  \"images\": [\n    { \"url\": \"https://example.com/test.jpg\", \"sortOrder\": 1, \"altText\": \"Test\" }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 creado', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "    const id = pm.response.json().id;",
+                  "    pm.collectionVariables.set('productId', id);",
+                  "    console.log('productId actualizado a', id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update product (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"TEST-UPDATED\",\n  \"name\": \"Reloj actualizado\",\n  \"description\": \"Actualizado desde Postman\",\n  \"price\": 399.99,\n  \"stock\": 15,\n  \"category\": \"SPORT\",\n  \"brandId\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{productId}}"] }
+          }
+        },
+        {
+          "name": "Update price (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/price?price=450.00",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","{{productId}}","price"],
+              "query": [ { "key": "price", "value": "450.00" } ]
+            }
+          }
+        },
+        {
+          "name": "Update stock (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/stock?stock=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","{{productId}}","stock"],
+              "query": [ { "key": "stock", "value": "25" } ]
+            }
+          }
+        },
+        {
+          "name": "Update status (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/status?status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","{{productId}}","status"],
+              "query": [ { "key": "status", "value": "ACTIVE", "description": "ACTIVE | INACTIVE | DISCONTINUED" } ]
+            }
+          }
+        },
+        {
+          "name": "Delete product (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{productId}}"] }
+          }
+        },
+        {
+          "name": "Create product con token BUYER — espera 403",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"FORBIDDEN-001\",\n  \"name\": \"No debería crearse\",\n  \"price\": 100,\n  \"stock\": 1,\n  \"category\": \"SPORT\",\n  \"brandId\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Asegura token de buyer antes de esta prueba",
+                  "console.log('Ejecutá Login Buyer antes de este request para forzar 403.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 FORBIDDEN', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cart (autenticado)",
+      "description": "Operaciones de carrito. Requiere cualquier usuario autenticado.",
+      "item": [
+        {
+          "name": "Add item to cart",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 2,\n  \"customerId\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/items", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","items"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.id) pm.collectionVariables.set('cartId', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get cart by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}"] }
+          }
+        },
+        {
+          "name": "Get cart by customer",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/customer/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","customer","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Get cart by guest token",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/guest/guest-abc-123", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","guest","guest-abc-123"] }
+          }
+        },
+        {
+          "name": "Update item quantity",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}/items/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}","items","{{productId}}"] }
+          }
+        },
+        {
+          "name": "Remove item from cart",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}/items/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}","items","{{productId}}"] }
+          }
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}"] }
+          }
+        },
+        {
+          "name": "Get cart SIN token — espera 403",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [ "pm.test('403 FORBIDDEN', function () { pm.response.to.have.status(403); });" ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Orders (autenticado)",
+      "description": "Órdenes / checkout. Todos los endpoints requieren autenticación.",
+      "item": [
+        {
+          "name": "Checkout (crear orden)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cartId\": {{cartId}},\n  \"customerId\": {{userId}},\n  \"discountCode\": \"BIENVENIDA10\",\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\",\n  \"phone\": \"+541112345678\",\n  \"line1\": \"Av. Corrientes 1234\",\n  \"line2\": \"Piso 3B\",\n  \"city\": \"CABA\",\n  \"region\": \"BA\",\n  \"postalCode\": \"C1043AAZ\",\n  \"countryCode\": \"AR\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/checkout", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","checkout"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.id) pm.collectionVariables.set('orderId', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders", "host": ["{{baseUrl}}"], "path": ["api","v1","orders"] }
+          }
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Get order by number",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/number/ORD-20260115-0001", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","number","ORD-20260115-0001"] }
+          }
+        },
+        {
+          "name": "Orders by customer",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/customer/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","customer","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\",\n  \"note\": \"Pago verificado\",\n  \"changedBy\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}","status"] }
+          }
+        },
+        {
+          "name": "Cancel order",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cliente solicitó cancelación\",\n  \"changedBy\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}","cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Discounts (ADMIN)",
+      "description": "CRUD de descuentos. Todos los endpoints requieren ROLE_ADMIN.",
+      "item": [
+        {
+          "name": "Create discount",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PROMO{{$timestamp}}\",\n  \"description\": \"Descuento de prueba creado en Postman\",\n  \"discountPercentage\": 15.00,\n  \"validFromDate\": \"2026-04-01T00:00:00\",\n  \"validUntilDate\": \"2026-12-31T23:59:59\",\n  \"maxUsageCount\": 100\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const id = pm.response.json().id;",
+                  "    pm.collectionVariables.set('discountId', id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all discounts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts"] }
+          }
+        },
+        {
+          "name": "Get discount by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}"] }
+          }
+        },
+        {
+          "name": "Get discount by code",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/code/BIENVENIDA10", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","code","BIENVENIDA10"] }
+          }
+        },
+        {
+          "name": "Active valid discounts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/active/valid", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","active","valid"] }
+          }
+        },
+        {
+          "name": "Discounts by status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/status/ACTIVE", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","status","ACTIVE"] }
+          }
+        },
+        {
+          "name": "Expired discounts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/expired", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","expired"] }
+          }
+        },
+        {
+          "name": "Scheduled discounts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/scheduled", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","scheduled"] }
+          }
+        },
+        {
+          "name": "Update discount",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BIENVENIDA10\",\n  \"description\": \"Descuento de bienvenida actualizado\",\n  \"discountPercentage\": 12.00,\n  \"validFromDate\": \"2026-03-01T00:00:00\",\n  \"validUntilDate\": \"2026-12-31T23:59:59\",\n  \"maxUsageCount\": 200\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}"] }
+          }
+        },
+        {
+          "name": "Activate discount",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}/activate", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}","activate"] }
+          }
+        },
+        {
+          "name": "Deactivate discount",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}","deactivate"] }
+          }
+        },
+        {
+          "name": "Delete discount",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User profile",
+      "description": "Perfil de usuario autenticado.",
+      "item": [
+        {
+          "name": "Get logged user (/me)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }
+          }
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Carlos\",\n  \"lastName\": \"Pérez Actualizado\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "description": "Categorías (montado en /categories, no /api/v1/).",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Get category by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/categories/1", "host": ["{{baseUrl}}"], "path": ["categories","1"] }
+          }
+        },
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 99,\n  \"description\": \"Categoría de prueba\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Actuator health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator","health"] }
+          }
+        }
+      ]
+    }
+  ]
+}

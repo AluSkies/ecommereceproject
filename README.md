@@ -152,6 +152,18 @@ curl -X POST $BASE/api/v1/products \
 
 ---
 
+## Colección Postman
+
+Para importar el set completo de requests (57 endpoints agrupados en 9 carpetas, con captura automática del JWT al hacer login):
+
+1. Abrir Postman → **Import** → seleccionar `postman/Tempus-API.postman_collection.json`.
+2. Ejecutar **Auth > Login Admin** o **Login Buyer**. El script post-response guarda el token en la variable `{{authToken}}` de la colección.
+3. El resto de los requests usan `Authorization: Bearer {{authToken}}` automáticamente.
+
+Incluye casos negativos: login con credenciales inválidas (espera 401), create product con token BUYER (espera 403), get cart sin token (espera 403).
+
+---
+
 ## Estructura del proyecto
 
 ```
