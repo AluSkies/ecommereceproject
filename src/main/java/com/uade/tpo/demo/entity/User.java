@@ -61,12 +61,6 @@ public class User /*implements UserDetails*/ {
     @Builder.Default
     private Date registrationDate = new Date();
 
-    @OneToMany(mappedBy = "user")
-    private List<Cart> carts;
-
-    @OneToMany(mappedBy = "user")
-    private List<Order> orders;
-
     // Implementación de UserDetails para JWT
     /*@Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

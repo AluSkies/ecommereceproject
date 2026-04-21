@@ -1,7 +1,7 @@
 package com.uade.tpo.demo.repository;
 
 
-import com.uade.tpo.demo.entity.DB.Cart;
+import com.uade.tpo.demo.purchaseservice.entity.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
