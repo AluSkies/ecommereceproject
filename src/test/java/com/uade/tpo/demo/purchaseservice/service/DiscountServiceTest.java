@@ -59,7 +59,7 @@ class DiscountServiceTest {
         @DisplayName("crea el cupón y normaliza el código a mayúsculas")
         void createsDiscountAndUppercasesCode() {
             DiscountRequest req = buildRequest("relojes20", "20% off", new BigDecimal("20"), true);
-            when(discountRepository.existsByCode("RELOJES20")).thenReturn(false);
+            when(discountRepository.existsByCode("relojes20")).thenReturn(false);
             when(discountRepository.save(any())).thenAnswer(inv -> {
                 Discount d = inv.getArgument(0);
                 d.setId(2);

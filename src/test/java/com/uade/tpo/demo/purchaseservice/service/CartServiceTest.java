@@ -1,13 +1,20 @@
 package com.uade.tpo.demo.purchaseservice.service;
 
-import com.uade.tpo.demo.catalogservice.dto.ProductResponse;
-import com.uade.tpo.demo.catalogservice.service.ProductService;
+import com.uade.tpo.demo.catalogservice.entity.Product;
+import com.uade.tpo.demo.repository.ProductRepository;
 import com.uade.tpo.demo.purchaseservice.domain.CartStatus;
 import com.uade.tpo.demo.purchaseservice.dto.cart.AddToCartRequest;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.UpdateCartItemRequest;
 import com.uade.tpo.demo.purchaseservice.entity.Cart;
 import com.uade.tpo.demo.purchaseservice.entity.CartItem;
+import com.uade.tpo.demo.purchaseservice.exception.ArticuloNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.CarritoInactivoException;
+import com.uade.tpo.demo.purchaseservice.exception.CarritoNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.CantidadInvalidaException;
+import com.uade.tpo.demo.purchaseservice.exception.ProductoNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.SolicitudInvalidaException;
+import com.uade.tpo.demo.purchaseservice.exception.StockInsuficienteException;
 import com.uade.tpo.demo.purchaseservice.repository.CartRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,15 +39,15 @@ import static org.mockito.Mockito.*;
 class CartServiceTest {
 
     @Mock CartRepository cartRepository;
-    @Mock ProductService productService;
+    @Mock ProductRepository productRepository;
     @InjectMocks CartService cartService;
 
-    private ProductResponse productRolex;
+    private Product productRolex;
     private Cart activeCart;
 
     @BeforeEach
     void setup() {
-        productRolex = ProductResponse.builder()
+        productRolex = Product.builder()
             .id(1)
             .sku("ROLEX-001")
             .name("Rolex Submariner")
@@ -72,11 +79,11 @@ class CartServiceTest {
         void createsNewCartWhenNoneExists() {
             AddToCartRequest req = buildRequest(42, null, 1, 2);
 
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
             when(cartRepository.findActiveByCustomerId(42)).thenReturn(Optional.empty());
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> {
                 Cart c = inv.getArgument(0);
-                c.setId(1);
+                if (c.getId() == null) c.setId(1);
                 return c;
             });
 
@@ -97,7 +104,7 @@ class CartServiceTest {
 
             AddToCartRequest req = buildRequest(42, null, 1, 2);
 
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
             when(cartRepository.findActiveByCustomerId(42)).thenReturn(Optional.of(activeCart));
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -111,10 +118,10 @@ class CartServiceTest {
         @DisplayName("lanza excepción si el producto no existe")
         void throwsWhenProductNotFound() {
             AddToCartRequest req = buildRequest(42, null, 99, 1);
-            when(productService.getProductById(99)).thenReturn(Optional.empty());
+            when(productRepository.findById(99)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> cartService.addToCart(req))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ProductoNoEncontradoException.class)
                 .hasMessageContaining("99");
         }
 
@@ -123,10 +130,10 @@ class CartServiceTest {
         void throwsWhenInsufficientStock() {
             productRolex.setStock(1);
             AddToCartRequest req = buildRequest(42, null, 1, 5);
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
 
             assertThatThrownBy(() -> cartService.addToCart(req))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(StockInsuficienteException.class)
                 .hasMessageContaining("Stock insuficiente");
         }
 
@@ -137,9 +144,9 @@ class CartServiceTest {
             AddToCartRequest reqNeg  = buildRequest(42, null, 1, -1);
 
             assertThatThrownBy(() -> cartService.addToCart(reqZero))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(CantidadInvalidaException.class);
             assertThatThrownBy(() -> cartService.addToCart(reqNeg))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(CantidadInvalidaException.class);
         }
 
         @Test
@@ -147,11 +154,11 @@ class CartServiceTest {
         void createsGuestCartWhenNoCustomerId() {
             AddToCartRequest req = buildRequest(null, "guest-token-abc", 1, 1);
 
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
             when(cartRepository.findActiveByGuestToken("guest-token-abc")).thenReturn(Optional.empty());
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> {
                 Cart c = inv.getArgument(0);
-                c.setId(2);
+                if (c.getId() == null) c.setId(2);
                 return c;
             });
 
@@ -165,10 +172,9 @@ class CartServiceTest {
         @DisplayName("lanza excepción si no hay customerId ni guestToken")
         void throwsWhenNoOwnerProvided() {
             AddToCartRequest req = buildRequest(null, null, 1, 1);
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
 
             assertThatThrownBy(() -> cartService.addToCart(req))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(SolicitudInvalidaException.class)
                 .hasMessageContaining("customerId");
         }
     }
@@ -187,7 +193,7 @@ class CartServiceTest {
             activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
 
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
             when(cartRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             UpdateCartItemRequest req = new UpdateCartItemRequest();
@@ -208,6 +214,10 @@ class CartServiceTest {
             UpdateCartItemRequest req = new UpdateCartItemRequest();
             req.setQuantity(0);
 
+            // qty 0 is invalid per the current service (throws CantidadInvalidaException)
+            // so only quantities <=0 => exception according to addItem path. But updateItemQuantity
+            // allows <=0 by removing the item. Actually service checks getQuantity() == null => throws.
+            // Let's verify current behavior: removes item when quantity <= 0
             CartResponse resp = cartService.updateItemQuantity(1, 1, req);
             assertThat(resp.getItems()).isEmpty();
         }
@@ -222,7 +232,7 @@ class CartServiceTest {
             req.setQuantity(3);
 
             assertThatThrownBy(() -> cartService.updateItemQuantity(1, 1, req))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(CarritoInactivoException.class)
                 .hasMessageContaining("activo");
         }
     }
@@ -241,7 +251,12 @@ class CartServiceTest {
             activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
             activeCart.getItems().add(CartItem.builder().cartId(1).productId(2).quantity(1).build());
 
+            Product seiko = Product.builder()
+                .id(2).sku("SEIKO-001").name("Seiko Prospex")
+                .price(new BigDecimal("450.00")).stock(50).build();
+
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
+            when(productRepository.findById(2)).thenReturn(Optional.of(seiko));
             when(cartRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             CartResponse resp = cartService.removeItem(1, 1);
@@ -256,7 +271,7 @@ class CartServiceTest {
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
 
             assertThatThrownBy(() -> cartService.removeItem(1, 1))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(CarritoInactivoException.class);
         }
 
         @Test
@@ -276,7 +291,7 @@ class CartServiceTest {
             when(cartRepository.findById(999)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> cartService.getCartById(999))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(CarritoNoEncontradoException.class)
                 .hasMessageContaining("999");
         }
     }
@@ -293,14 +308,14 @@ class CartServiceTest {
         @DisplayName("calcula el subtotal correctamente sumando líneas")
         void calculatesSubtotalCorrectly() {
             activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
-            ProductResponse seiko = ProductResponse.builder()
+            Product seiko = Product.builder()
                 .id(2).sku("SEIKO-001").name("Seiko Prospex")
                 .price(new BigDecimal("450.00")).stock(50).build();
             activeCart.getItems().add(CartItem.builder().cartId(1).productId(2).quantity(1).build());
 
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
-            when(productService.getProductById(1)).thenReturn(Optional.of(productRolex));
-            when(productService.getProductById(2)).thenReturn(Optional.of(seiko));
+            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
+            when(productRepository.findById(2)).thenReturn(Optional.of(seiko));
 
             CartResponse resp = cartService.getCartById(1);
 

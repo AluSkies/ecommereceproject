@@ -6,12 +6,15 @@ import com.uade.tpo.demo.purchaseservice.dto.cart.AddToCartRequest;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartItemResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.UpdateCartItemRequest;
+import com.uade.tpo.demo.purchaseservice.exception.CantidadInvalidaException;
+import com.uade.tpo.demo.purchaseservice.exception.CarritoNoEncontradoException;
 import com.uade.tpo.demo.purchaseservice.service.CartService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -27,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CartController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("CartController — endpoints REST")
 class CartControllerTest {
 
@@ -61,8 +65,8 @@ class CartControllerTest {
     class AddItem {
 
         @Test
-        @DisplayName("200 OK con carrito actualizado")
-        void returns200WithCart() throws Exception {
+        @DisplayName("201 Created con carrito actualizado")
+        void returns201WithCart() throws Exception {
             when(cartService.addToCart(any())).thenReturn(sampleCart);
 
             AddToCartRequest req = new AddToCartRequest();
@@ -73,7 +77,7 @@ class CartControllerTest {
             mockMvc.perform(post("/api/v1/cart/items")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.customerId").value(42))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
@@ -83,9 +87,9 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("400 cuando el servicio lanza IllegalArgumentException")
+        @DisplayName("400 cuando el servicio lanza CantidadInvalidaException")
         void returns400WhenServiceThrows() throws Exception {
-            when(cartService.addToCart(any())).thenThrow(new IllegalArgumentException("Stock insuficiente"));
+            when(cartService.addToCart(any())).thenThrow(new CantidadInvalidaException(100));
 
             AddToCartRequest req = new AddToCartRequest();
             req.setCustomerId(42);
@@ -123,7 +127,7 @@ class CartControllerTest {
         @Test
         @DisplayName("404 cuando el carrito no existe")
         void returns404WhenNotFound() throws Exception {
-            when(cartService.getCartById(999)).thenThrow(new IllegalArgumentException("not found"));
+            when(cartService.getCartById(999)).thenThrow(new CarritoNoEncontradoException(999));
 
             mockMvc.perform(get("/api/v1/cart/999"))
                 .andExpect(status().isNotFound());
@@ -152,7 +156,7 @@ class CartControllerTest {
         @DisplayName("404 si el cliente no tiene carrito activo")
         void returns404WhenNoActiveCart() throws Exception {
             when(cartService.getCartByCustomerId(99)).thenThrow(
-                new IllegalArgumentException("No hay carrito activo"));
+                new CarritoNoEncontradoException("cliente", "99"));
 
             mockMvc.perform(get("/api/v1/cart/customer/99"))
                 .andExpect(status().isNotFound());
@@ -210,7 +214,7 @@ class CartControllerTest {
         @DisplayName("400 cuando cantidad es inválida")
         void returns400WhenInvalid() throws Exception {
             when(cartService.updateItemQuantity(eq(1), eq(1), any()))
-                .thenThrow(new IllegalStateException("Carrito no activo"));
+                .thenThrow(new CantidadInvalidaException("Cantidad requerida"));
 
             UpdateCartItemRequest req = new UpdateCartItemRequest();
             req.setQuantity(3);
@@ -266,7 +270,7 @@ class CartControllerTest {
         @Test
         @DisplayName("404 si el carrito no existe")
         void returns404WhenNotFound() throws Exception {
-            doThrow(new IllegalArgumentException("not found")).when(cartService).clearCart(999);
+            doThrow(new CarritoNoEncontradoException(999)).when(cartService).clearCart(999);
 
             mockMvc.perform(delete("/api/v1/cart/999"))
                 .andExpect(status().isNotFound());
