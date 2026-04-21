@@ -1,8 +1,12 @@
 package com.uade.tpo.demo.purchaseservice.exception;
 
+import com.uade.tpo.demo.exceptions.InvalidCredentialsException;
+import com.uade.tpo.demo.exceptions.UserAlreadyExistsException;
+import com.uade.tpo.demo.exceptions.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -135,6 +139,54 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
+        InvalidCredentialsException ex, HttpServletRequest request) {
+        log.warn("Credenciales inválidas en {}", request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+            "CREDENCIALES_INVALIDAS",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(
+        UserAlreadyExistsException ex, HttpServletRequest request) {
+        log.warn("Conflicto al registrar usuario: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "USUARIO_YA_EXISTE",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(
+        UserNotFoundException ex, HttpServletRequest request) {
+        log.warn("Usuario no encontrado: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "USUARIO_NO_ENCONTRADO",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+        AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Acceso denegado a {}: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "ACCESO_DENEGADO",
+            "No tiene permisos suficientes para acceder a este recurso",
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     /**

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,6 +38,7 @@ public class ProductController {
      * POST /api/v1/products
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
         ProductResponse created = productService.createProduct(request);
         return ResponseEntity.created(URI.create("/api/v1/products/" + created.getId())).body(created);
@@ -68,6 +70,7 @@ public class ProductController {
      * PUT /api/v1/products/{id}
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> updateProduct(
         @PathVariable Integer id,
         @RequestBody ProductRequest request) {
@@ -84,6 +87,7 @@ public class ProductController {
      * PATCH /api/v1/products/{id}/price
      */
     @PatchMapping("/{id}/price")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> updatePrice(
         @PathVariable Integer id,
         @RequestParam BigDecimal price) {
@@ -100,6 +104,7 @@ public class ProductController {
      * PATCH /api/v1/products/{id}/stock
      */
     @PatchMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> updateStock(
         @PathVariable Integer id,
         @RequestParam Integer stock) {
@@ -116,6 +121,7 @@ public class ProductController {
      * DELETE /api/v1/products/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
@@ -223,6 +229,7 @@ public class ProductController {
      * PATCH /api/v1/products/{id}/status
      */
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> updateProductStatus(
         @PathVariable Integer id,
         @RequestParam ProductStatus status) {

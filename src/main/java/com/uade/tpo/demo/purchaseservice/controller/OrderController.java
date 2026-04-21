@@ -5,6 +5,7 @@ import com.uade.tpo.demo.purchaseservice.dto.order.CheckoutRequest;
 import com.uade.tpo.demo.purchaseservice.dto.order.OrderResponse;
 import com.uade.tpo.demo.purchaseservice.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/orders")
+@PreAuthorize("isAuthenticated()")
 public class OrderController {
 
     private final OrderService orderService;

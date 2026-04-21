@@ -1,7 +1,6 @@
 package com.uade.tpo.demo.service;
 
 import java.util.Date;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -9,12 +8,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.uade.tpo.demo.entity.User;
-import com.uade.tpo.demo.entity.dto.UserLoginRequest;
 import com.uade.tpo.demo.entity.dto.UserRegisterRequest;
 import com.uade.tpo.demo.entity.dto.UserResponse;
 import com.uade.tpo.demo.entity.dto.UserUpdateRequest;
 import com.uade.tpo.demo.entity.enums.Role;
-import com.uade.tpo.demo.exceptions.InvalidCredentialsException;
 import com.uade.tpo.demo.exceptions.UserAlreadyExistsException;
 import com.uade.tpo.demo.exceptions.UserNotFoundException;
 import com.uade.tpo.demo.repository.UserRepository;
@@ -51,23 +48,6 @@ public class UserServiceImpl implements UserService {
         
         User savedUser = userRepository.save(user);
         return convertToUserResponse(savedUser);
-    }
-
-    @Override
-    public UserResponse loginUser(UserLoginRequest request) {
-        Optional<User> userOpt = userRepository.findByUsername(request.getUsername());
-        
-        if (userOpt.isEmpty()) {
-            throw new InvalidCredentialsException("Credenciales inválidas");
-        }
-        
-        User user = userOpt.get();
-        
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("Credenciales inválidas");
-        }
-        
-        return convertToUserResponse(user);
     }
 
     @Override
@@ -122,20 +102,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getLoggedUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(username).orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
+        return userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
     }
 
     @Override
     public UserResponse getLoggedUserResponse() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return convertToUserResponse(userRepository.findByEmail(username).orElseThrow(() -> new UserNotFoundException("Usuario no encontrado")));
+        return convertToUserResponse(userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("Usuario no encontrado")));
     }
 
 /**
      * Convierte una entidad User a UserResponse
      */
     private UserResponse convertToUserResponse(User user) {
-        System.out.println("USERRRRR: " + user.getUsername());
         UserResponse response = new UserResponse();
         response.setIdUser(user.getUserId());
         response.setUsername(user.getUsername());

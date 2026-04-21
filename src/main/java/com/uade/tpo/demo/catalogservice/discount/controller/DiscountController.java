@@ -5,6 +5,7 @@ import com.uade.tpo.demo.catalogservice.discount.dto.DiscountRequest;
 import com.uade.tpo.demo.catalogservice.discount.dto.DiscountResponse;
 import com.uade.tpo.demo.catalogservice.discount.service.DiscountService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -17,6 +18,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/v1/discounts")
+@PreAuthorize("hasRole('ADMIN')")
 public class DiscountController {
     private final DiscountService discountService;
 
