@@ -4,18 +4,23 @@ import com.uade.tpo.demo.purchaseservice.dto.cart.AddToCartRequest;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.UpdateCartItemRequest;
 import com.uade.tpo.demo.purchaseservice.service.CartService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controlador REST para operaciones de carrito
+ * REST Controller for cart operations
+ */
 @RestController
 @RequestMapping("/api/v1/cart")
+@AllArgsConstructor
+@Slf4j
 public class CartController {
 
     private final CartService cartService;
-
-    public CartController(CartService cartService) {
-        this.cartService = cartService;
-    }
 
     /**
      * Agregar producto al carrito (o crear carrito si no existe)
@@ -23,12 +28,10 @@ public class CartController {
      */
     @PostMapping("/items")
     public ResponseEntity<CartResponse> addItem(@RequestBody AddToCartRequest request) {
-        try {
-            CartResponse cart = cartService.addItem(request);
-            return ResponseEntity.ok(cart);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        log.info("POST /api/v1/cart/items - Agregar item: producto={}, cantidad={}", 
+            request.getProductId(), request.getQuantity());
+        CartResponse cart = cartService.addToCart(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cart);
     }
 
     /**
@@ -37,11 +40,9 @@ public class CartController {
      */
     @GetMapping("/{cartId}")
     public ResponseEntity<CartResponse> getCart(@PathVariable Integer cartId) {
-        try {
-            return ResponseEntity.ok(cartService.getCart(cartId));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        log.info("GET /api/v1/cart/{} - Obtener carrito", cartId);
+        CartResponse cart = cartService.getCartById(cartId);
+        return ResponseEntity.ok(cart);
     }
 
     /**
@@ -50,11 +51,9 @@ public class CartController {
      */
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<CartResponse> getCartByCustomer(@PathVariable Integer customerId) {
-        try {
-            return ResponseEntity.ok(cartService.getActiveCartByCustomer(customerId));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        log.info("GET /api/v1/cart/customer/{} - Obtener carrito del cliente", customerId);
+        CartResponse cart = cartService.getCartByCustomerId(customerId);
+        return ResponseEntity.ok(cart);
     }
 
     /**
@@ -63,11 +62,9 @@ public class CartController {
      */
     @GetMapping("/guest/{guestToken}")
     public ResponseEntity<CartResponse> getCartByGuestToken(@PathVariable String guestToken) {
-        try {
-            return ResponseEntity.ok(cartService.getActiveCartByGuestToken(guestToken));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        log.info("GET /api/v1/cart/guest/{} - Obtener carrito de invitado", guestToken);
+        CartResponse cart = cartService.getCartByGuestToken(guestToken);
+        return ResponseEntity.ok(cart);
     }
 
     /**
@@ -79,11 +76,10 @@ public class CartController {
         @PathVariable Integer cartId,
         @PathVariable Integer productId,
         @RequestBody UpdateCartItemRequest request) {
-        try {
-            return ResponseEntity.ok(cartService.updateItemQuantity(cartId, productId, request));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        log.info("PUT /api/v1/cart/{}/items/{} - Actualizar cantidad a {}", 
+            cartId, productId, request.getQuantity());
+        CartResponse cart = cartService.updateItemQuantity(cartId, productId, request);
+        return ResponseEntity.ok(cart);
     }
 
     /**
@@ -94,11 +90,9 @@ public class CartController {
     public ResponseEntity<CartResponse> removeItem(
         @PathVariable Integer cartId,
         @PathVariable Integer productId) {
-        try {
-            return ResponseEntity.ok(cartService.removeItem(cartId, productId));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        log.info("DELETE /api/v1/cart/{}/items/{} - Remover item", cartId, productId);
+        CartResponse cart = cartService.removeItem(cartId, productId);
+        return ResponseEntity.ok(cart);
     }
 
     /**
@@ -107,11 +101,8 @@ public class CartController {
      */
     @DeleteMapping("/{cartId}")
     public ResponseEntity<Void> clearCart(@PathVariable Integer cartId) {
-        try {
-            cartService.clearCart(cartId);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        log.info("DELETE /api/v1/cart/{} - Limpiar carrito", cartId);
+        cartService.clearCart(cartId);
+        return ResponseEntity.noContent().build();
     }
 }

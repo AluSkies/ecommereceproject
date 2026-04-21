@@ -43,7 +43,7 @@ public class OrderService {
     }
 
     public OrderResponse checkout(CheckoutRequest request) {
-        CartResponse cart = cartService.getCart(request.getCartId());
+        CartResponse cart = cartService.getCartById(request.getCartId());
 
         if (!CartStatus.ACTIVE.equals(cart.getStatus())) {
             throw new IllegalStateException("El carrito no está activo");
