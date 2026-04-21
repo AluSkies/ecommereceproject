@@ -41,7 +41,7 @@ class OrderServiceTest {
     private Order pendingOrder;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         CartItemResponse item1 = CartItemResponse.builder()
             .productId(1).productName("Rolex Submariner").productSku("ROLEX-001")
             .unitPrice(new BigDecimal("9500.00")).quantity(1)
@@ -89,7 +89,7 @@ class OrderServiceTest {
         @Test
         @DisplayName("crea la orden correctamente desde un carrito activo sin descuento")
         void createsOrderFromActiveCart() {
-            when(cartService.getCart(1)).thenReturn(activeCart);
+            when(cartService.getCartById(1)).thenReturn(activeCart);
             when(orderRepository.save(any())).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
                 o.setId(1);
@@ -122,7 +122,7 @@ class OrderServiceTest {
                 .endsAt(LocalDateTime.now().plusDays(30))
                 .isActive(true).build();
 
-            when(cartService.getCart(1)).thenReturn(activeCart);
+            when(cartService.getCartById(1)).thenReturn(activeCart);
             when(discountService.findValidByCode("RELOJES10")).thenReturn(Optional.of(d));
             when(orderRepository.save(any())).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
@@ -147,7 +147,7 @@ class OrderServiceTest {
         @Test
         @DisplayName("ignora el código de descuento si no es válido y continua el checkout")
         void ignoresInvalidDiscountCode() {
-            when(cartService.getCart(1)).thenReturn(activeCart);
+            when(cartService.getCartById(1)).thenReturn(activeCart);
             when(discountService.findValidByCode("EXPIRED")).thenReturn(Optional.empty());
             when(orderRepository.save(any())).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
@@ -170,7 +170,7 @@ class OrderServiceTest {
                 .items(List.of()).subtotal(BigDecimal.ZERO)
                 .expiresAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 
-            when(cartService.getCart(1)).thenReturn(convertedCart);
+            when(cartService.getCartById(1)).thenReturn(convertedCart);
 
             assertThatThrownBy(() -> orderService.checkout(buildCheckout(1, 42, null)))
                 .isInstanceOf(IllegalStateException.class)
@@ -185,7 +185,7 @@ class OrderServiceTest {
                 .items(new ArrayList<>()).subtotal(BigDecimal.ZERO)
                 .expiresAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 
-            when(cartService.getCart(1)).thenReturn(emptyCart);
+            when(cartService.getCartById(1)).thenReturn(emptyCart);
 
             assertThatThrownBy(() -> orderService.checkout(buildCheckout(1, 42, null)))
                 .isInstanceOf(IllegalStateException.class)
@@ -195,7 +195,7 @@ class OrderServiceTest {
         @Test
         @DisplayName("el shipping_snapshot captura los datos de envío")
         void capturesShippingSnapshot() {
-            when(cartService.getCart(1)).thenReturn(activeCart);
+            when(cartService.getCartById(1)).thenReturn(activeCart);
             when(orderRepository.save(any())).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
                 o.setId(1);
