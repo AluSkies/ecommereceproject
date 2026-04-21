@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Repository
+@Repository("purchaseDiscountRepository")
 public class DiscountRepository {
 
     private final List<Discount> discounts = new ArrayList<>();
