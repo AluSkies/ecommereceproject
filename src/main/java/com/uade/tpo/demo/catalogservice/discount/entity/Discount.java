@@ -97,7 +97,7 @@ public class Discount {
         if (originalPrice == null || originalPrice.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
-        return originalPrice.multiply(discountPercentage).divide(new BigDecimal("100"), BigDecimal.ROUND_HALF_UP);
+        return originalPrice.multiply(discountPercentage).divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
     }
 
     /**

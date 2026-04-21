@@ -2,7 +2,6 @@ package com.uade.tpo.demo.purchaseservice.service;
 
 import com.uade.tpo.demo.purchaseservice.domain.CartStatus;
 import com.uade.tpo.demo.purchaseservice.domain.OrderStatus;
-import com.uade.tpo.demo.purchaseservice.dto.cart.CartItemResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.order.CheckoutRequest;
 import com.uade.tpo.demo.purchaseservice.dto.order.OrderItemResponse;

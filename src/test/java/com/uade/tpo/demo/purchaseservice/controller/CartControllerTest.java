@@ -63,7 +63,7 @@ class CartControllerTest {
         @Test
         @DisplayName("200 OK con carrito actualizado")
         void returns200WithCart() throws Exception {
-            when(cartService.addItem(any())).thenReturn(sampleCart);
+            when(cartService.addToCart(any())).thenReturn(sampleCart);
 
             AddToCartRequest req = new AddToCartRequest();
             req.setCustomerId(42);
@@ -85,7 +85,7 @@ class CartControllerTest {
         @Test
         @DisplayName("400 cuando el servicio lanza IllegalArgumentException")
         void returns400WhenServiceThrows() throws Exception {
-            when(cartService.addItem(any())).thenThrow(new IllegalArgumentException("Stock insuficiente"));
+            when(cartService.addToCart(any())).thenThrow(new IllegalArgumentException("Stock insuficiente"));
 
             AddToCartRequest req = new AddToCartRequest();
             req.setCustomerId(42);
@@ -110,7 +110,7 @@ class CartControllerTest {
         @Test
         @DisplayName("200 OK con el carrito")
         void returns200WithCart() throws Exception {
-            when(cartService.getCart(1)).thenReturn(sampleCart);
+            when(cartService.getCartById(1)).thenReturn(sampleCart);
 
             mockMvc.perform(get("/api/v1/cart/1"))
                 .andExpect(status().isOk())
@@ -123,7 +123,7 @@ class CartControllerTest {
         @Test
         @DisplayName("404 cuando el carrito no existe")
         void returns404WhenNotFound() throws Exception {
-            when(cartService.getCart(999)).thenThrow(new IllegalArgumentException("not found"));
+            when(cartService.getCartById(999)).thenThrow(new IllegalArgumentException("not found"));
 
             mockMvc.perform(get("/api/v1/cart/999"))
                 .andExpect(status().isNotFound());
@@ -141,7 +141,7 @@ class CartControllerTest {
         @Test
         @DisplayName("200 OK con el carrito activo del cliente")
         void returns200() throws Exception {
-            when(cartService.getActiveCartByCustomer(42)).thenReturn(sampleCart);
+            when(cartService.getCartByCustomerId(42)).thenReturn(sampleCart);
 
             mockMvc.perform(get("/api/v1/cart/customer/42"))
                 .andExpect(status().isOk())
@@ -151,7 +151,7 @@ class CartControllerTest {
         @Test
         @DisplayName("404 si el cliente no tiene carrito activo")
         void returns404WhenNoActiveCart() throws Exception {
-            when(cartService.getActiveCartByCustomer(99)).thenThrow(
+            when(cartService.getCartByCustomerId(99)).thenThrow(
                 new IllegalArgumentException("No hay carrito activo"));
 
             mockMvc.perform(get("/api/v1/cart/customer/99"))
@@ -176,7 +176,7 @@ class CartControllerTest {
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .updatedAt(LocalDateTime.now()).build();
 
-            when(cartService.getActiveCartByGuestToken("abc-token")).thenReturn(guestCart);
+            when(cartService.getCartByGuestToken("abc-token")).thenReturn(guestCart);
 
             mockMvc.perform(get("/api/v1/cart/guest/abc-token"))
                 .andExpect(status().isOk())
