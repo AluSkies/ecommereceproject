@@ -10,5 +10,5 @@ public interface AddressesOthersRepository extends JpaRepository<AddressesOthers
 
     List<AddressesOthers> findByCustomer_Id(Long customerId);
 
-    List<AddressesOthers> findByCustomer_User_Username(String username);
+    List<AddressesOthers> findByCustomer_User_Email(String email);
 }

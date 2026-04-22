@@ -46,8 +46,11 @@ public class AuthService {
         Date now = new Date();
 
         User user = User.builder()
+                .username(request.getEmail())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getFirstName())
+                .lastName(request.getLastName())
                 .role(Role.BUYER)
                 .emailVerified(false)
                 .isActive(true)

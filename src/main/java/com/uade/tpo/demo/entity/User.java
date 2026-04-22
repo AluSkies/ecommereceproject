@@ -24,6 +24,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,33 +40,42 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String password;
+
+    @Column(nullable = false, length = 50)
+    private String name;
+
+    @Column(name = "last_name", nullable = false, length = 50)
+    private String lastName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Column(name = "email_verified", nullable = false)
+    @Transient
     @Builder.Default
     private Boolean emailVerified = false;
 
-    @Column(name = "is_active", nullable = false)
+    @Transient
     @Builder.Default
     private Boolean isActive = true;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "registration_date", nullable = false)
     @Builder.Default
     private Date createdAt = new Date();
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_at", nullable = false)
+    @Transient
     @Builder.Default
     private Date updatedAt = new Date();
 
