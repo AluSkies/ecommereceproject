@@ -241,4 +241,4 @@ El frontend React vive en `/frontend` con su propio README. Requiere Node 20.19+
 
 ## Autores / Licencia
 
-Trabajo práctico UADE. Grupo N°: _____ (completar).
+Trabajo práctico UADE. Grupo N°: 10.
