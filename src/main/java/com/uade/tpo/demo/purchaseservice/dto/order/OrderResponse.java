@@ -11,9 +11,9 @@ import java.util.List;
 @Data
 @Builder
 public class OrderResponse {
-    private Integer id;
+    private Long id;
     private String orderNumber;
-    private Integer customerId;
+    private Long userId;
     private OrderStatus status;
     private List<OrderItemResponse> items;
     private BigDecimal subtotal;

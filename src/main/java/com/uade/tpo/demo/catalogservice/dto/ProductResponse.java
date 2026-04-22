@@ -12,8 +12,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * DTO for product responses (server output)
- * Contains all fields including server-generated metadata (id, status, timestamps)
+ * DTO for product responses (server output).
+ * Contains all fields including server-generated metadata (id, status, timestamps).
+ * {@code category} (WatchCategory) and {@code categoryCode} (String) are both
+ * exposed so existing clients keep working while new ones can read the raw code.
  */
 @Data
 @NoArgsConstructor
@@ -30,6 +32,7 @@ public class ProductResponse {
     private Integer stock;
     private ProductStatus status;
     private WatchCategory category;
+    private String categoryCode;
     private Long brandId;
     private String caliber;
     private String caseSize;

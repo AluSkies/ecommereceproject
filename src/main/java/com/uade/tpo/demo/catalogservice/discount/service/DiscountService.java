@@ -1,11 +1,14 @@
 package com.uade.tpo.demo.catalogservice.discount.service;
 
 import com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus;
+import com.uade.tpo.demo.catalogservice.discount.domain.DiscountType;
 import com.uade.tpo.demo.catalogservice.discount.dto.DiscountRequest;
 import com.uade.tpo.demo.catalogservice.discount.dto.DiscountResponse;
 import com.uade.tpo.demo.catalogservice.discount.entity.Discount;
 import com.uade.tpo.demo.repository.DiscountRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,22 +17,22 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Business logic service for discount management
- * Handles creation, validation, and application of discounts
- * Separates business rules from data persistence and HTTP concerns
+ * Business logic service for discount management backed by JPA persistence.
+ *
+ * <p>Exposes {@link #findValidByCode(String)} as the integration point used by
+ * the order service (written by a parallel agent) to attach a discount to a new
+ * order while it is being placed.</p>
  */
 @Service
+@RequiredArgsConstructor
 public class DiscountService {
+
     private final DiscountRepository discountRepository;
 
-    public DiscountService(DiscountRepository discountRepository) {
-        this.discountRepository = discountRepository;
-    }
-
     /**
-     * Create a new discount
-     * Validates: unique code, valid date range, positive percentage
+     * Create a new discount.
      */
+    @Transactional
     public DiscountResponse createDiscount(DiscountRequest request) {
         validateDiscountRequest(request);
 
@@ -37,34 +40,34 @@ public class DiscountService {
             throw new IllegalArgumentException("Discount code already exists: " + request.getCode());
         }
 
-        Discount discount = new Discount(
-            null,
-            request.getCode(),
-            request.getDescription(),
-            request.getDiscountPercentage(),
-            DiscountStatus.INACTIVE,
-            request.getValidFromDate(),
-            request.getValidUntilDate(),
-            request.getMaxUsageCount(),
-            0,
-            LocalDateTime.now(),
-            LocalDateTime.now()
-        );
+        Discount discount = Discount.builder()
+            .code(request.getCode())
+            .description(request.getDescription())
+            .discountType(request.getDiscountType())
+            .discountValue(request.getDiscountValue())
+            .minPurchase(request.getMinPurchase())
+            .maxUses(request.getMaxUses())
+            .usesCount(0)
+            .status(DiscountStatus.ACTIVE)
+            .validFrom(request.getValidFrom())
+            .validUntil(request.getValidUntil())
+            .build();
 
-        Discount saved = discountRepository.save(discount);
-        return toResponse(saved);
+        return toResponse(discountRepository.save(discount));
     }
 
     /**
      * Get discount by ID
      */
+    @Transactional(readOnly = true)
     public Optional<DiscountResponse> getDiscountById(Integer id) {
         return discountRepository.findById(id).map(this::toResponse);
     }
 
     /**
-     * Get discount by code (useful for applying discounts)
+     * Get discount by code
      */
+    @Transactional(readOnly = true)
     public Optional<DiscountResponse> getDiscountByCode(String code) {
         return discountRepository.findByCode(code).map(this::toResponse);
     }
@@ -72,6 +75,7 @@ public class DiscountService {
     /**
      * Get all discounts
      */
+    @Transactional(readOnly = true)
     public List<DiscountResponse> getAllDiscounts() {
         return discountRepository.findAll().stream()
             .map(this::toResponse)
@@ -79,10 +83,11 @@ public class DiscountService {
     }
 
     /**
-     * Get currently active and valid discounts (can be applied now)
+     * Get currently active and valid discounts (applicable right now).
      */
+    @Transactional(readOnly = true)
     public List<DiscountResponse> getActiveAndValidDiscounts() {
-        return discountRepository.findActiveAndValid().stream()
+        return discountRepository.findActiveAndValid(LocalDateTime.now()).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
@@ -90,6 +95,7 @@ public class DiscountService {
     /**
      * Get discounts by status
      */
+    @Transactional(readOnly = true)
     public List<DiscountResponse> getDiscountsByStatus(DiscountStatus status) {
         return discountRepository.findByStatus(status).stream()
             .map(this::toResponse)
@@ -99,8 +105,9 @@ public class DiscountService {
     /**
      * Get expired discounts
      */
+    @Transactional(readOnly = true)
     public List<DiscountResponse> getExpiredDiscounts() {
-        return discountRepository.findExpired().stream()
+        return discountRepository.findExpired(LocalDateTime.now()).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
@@ -108,194 +115,126 @@ public class DiscountService {
     /**
      * Get scheduled (future) discounts
      */
+    @Transactional(readOnly = true)
     public List<DiscountResponse> getScheduledDiscounts() {
-        return discountRepository.findScheduled().stream()
+        return discountRepository.findScheduled(LocalDateTime.now()).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
     /**
-     * Update discount
+     * Update a discount's editable fields.
      */
+    @Transactional
     public DiscountResponse updateDiscount(Integer id, DiscountRequest request) {
         Discount discount = discountRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Discount not found: " + id));
 
         validateDiscountRequest(request);
 
-        // Check if code is being changed and if new code already exists
-        if (!discount.getCode().equals(request.getCode()) 
+        if (!discount.getCode().equals(request.getCode())
             && discountRepository.existsByCode(request.getCode())) {
             throw new IllegalArgumentException("Discount code already exists: " + request.getCode());
         }
 
         discount.setCode(request.getCode());
         discount.setDescription(request.getDescription());
-        discount.setDiscountPercentage(request.getDiscountPercentage());
-        discount.setValidFromDate(request.getValidFromDate());
-        discount.setValidUntilDate(request.getValidUntilDate());
-        discount.setMaxUsageCount(request.getMaxUsageCount());
-        discount.setUpdatedAt(LocalDateTime.now());
+        discount.setDiscountType(request.getDiscountType());
+        discount.setDiscountValue(request.getDiscountValue());
+        discount.setMinPurchase(request.getMinPurchase());
+        discount.setMaxUses(request.getMaxUses());
+        discount.setValidFrom(request.getValidFrom());
+        discount.setValidUntil(request.getValidUntil());
 
-        Discount updated = discountRepository.save(discount);
-        return toResponse(updated);
+        return toResponse(discountRepository.save(discount));
     }
 
     /**
-     * Activate discount (change status to ACTIVE)
+     * Activate discount (status -&gt; ACTIVE).
      */
+    @Transactional
     public DiscountResponse activateDiscount(Integer id) {
         Discount discount = discountRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Discount not found: " + id));
-
-        discount.updateStatus(DiscountStatus.ACTIVE);
-        Discount updated = discountRepository.save(discount);
-        return toResponse(updated);
+        discount.setStatus(DiscountStatus.ACTIVE);
+        return toResponse(discountRepository.save(discount));
     }
 
     /**
-     * Deactivate discount (change status to INACTIVE)
+     * Deactivate discount (status -&gt; DISABLED).
      */
+    @Transactional
     public DiscountResponse deactivateDiscount(Integer id) {
         Discount discount = discountRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Discount not found: " + id));
-
-        discount.updateStatus(DiscountStatus.INACTIVE);
-        Discount updated = discountRepository.save(discount);
-        return toResponse(updated);
+        discount.setStatus(DiscountStatus.DISABLED);
+        return toResponse(discountRepository.save(discount));
     }
 
     /**
      * Delete discount
      */
+    @Transactional
     public void deleteDiscount(Integer id) {
-        discountRepository.delete(id);
+        discountRepository.deleteById(id);
     }
 
     /**
-     * Apply discount to a price
-     * Returns the discount amount and final price
-     * Throws exception if discount cannot be applied
+     * Integration point for the order service: find a discount by code only if
+     * it is valid right now.
      */
-    public DiscountApplicationResult applyDiscount(String discountCode, BigDecimal originalPrice) {
-        Discount discount = discountRepository.findByCode(discountCode)
-            .orElseThrow(() -> new IllegalArgumentException("Discount not found: " + discountCode));
-
-        if (!discount.canBeApplied()) {
-            throw new IllegalArgumentException("Discount cannot be applied: " + discountCode);
-        }
-
-        BigDecimal discountAmount = discount.calculateDiscountAmount(originalPrice);
-        BigDecimal finalPrice = originalPrice.subtract(discountAmount);
-
-        // Increment usage count
-        discount.incrementUsageCount();
-        discountRepository.save(discount);
-
-        return new DiscountApplicationResult(
-            discount.getCode(),
-            discount.getDiscountPercentage(),
-            discountAmount,
-            finalPrice
-        );
+    @Transactional(readOnly = true)
+    public Optional<Discount> findValidByCode(String code) {
+        return discountRepository.findByCode(code)
+            .filter(Discount::isValid);
     }
 
     /**
-     * Try to apply discount without throwing exception if it fails
-     * Returns empty Optional if discount cannot be applied
-     */
-    public Optional<DiscountApplicationResult> tryApplyDiscount(String discountCode, BigDecimal originalPrice) {
-        try {
-            return Optional.of(applyDiscount(discountCode, originalPrice));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Validate discount request fields
+     * Validate the input shape for create/update operations.
      */
     private void validateDiscountRequest(DiscountRequest request) {
         if (request.getCode() == null || request.getCode().isBlank()) {
             throw new IllegalArgumentException("Discount code cannot be empty");
         }
-
-        if (request.getDiscountPercentage() == null) {
-            throw new IllegalArgumentException("Discount percentage is required");
+        if (request.getDiscountType() == null) {
+            throw new IllegalArgumentException("Discount type is required");
         }
-
-        if (request.getDiscountPercentage().compareTo(BigDecimal.ZERO) < 0 
-            || request.getDiscountPercentage().compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("Discount percentage must be between 0 and 100");
+        if (request.getDiscountValue() == null
+            || request.getDiscountValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Discount value must be positive");
         }
-
-        if (request.getValidFromDate() == null || request.getValidUntilDate() == null) {
-            throw new IllegalArgumentException("Valid dates are required");
+        if (request.getDiscountType() == DiscountType.PERCENTAGE
+            && request.getDiscountValue().compareTo(new BigDecimal("100")) > 0) {
+            throw new IllegalArgumentException("Percentage discount cannot exceed 100");
         }
-
-        if (!request.getValidFromDate().isBefore(request.getValidUntilDate())) {
+        if (request.getValidFrom() != null && request.getValidUntil() != null
+            && !request.getValidFrom().isBefore(request.getValidUntil())) {
             throw new IllegalArgumentException("Valid from date must be before valid until date");
         }
-
-        if (request.getMaxUsageCount() != null && request.getMaxUsageCount() < 0) {
-            throw new IllegalArgumentException("Max usage count cannot be negative");
+        if (request.getMaxUses() != null && request.getMaxUses() < 0) {
+            throw new IllegalArgumentException("Max uses count cannot be negative");
         }
     }
 
     /**
      * Convert Discount entity to DiscountResponse DTO
-     * Includes computed fields (isCurrentlyValid, hasExpired, canBeApplied)
      */
     private DiscountResponse toResponse(Discount discount) {
         return DiscountResponse.builder()
             .id(discount.getId())
             .code(discount.getCode())
             .description(discount.getDescription())
-            .discountPercentage(discount.getDiscountPercentage())
+            .discountType(discount.getDiscountType())
+            .discountValue(discount.getDiscountValue())
+            .minPurchase(discount.getMinPurchase())
+            .maxUses(discount.getMaxUses())
+            .usesCount(discount.getUsesCount())
             .status(discount.getStatus())
-            .validFromDate(discount.getValidFromDate())
-            .validUntilDate(discount.getValidUntilDate())
-            .maxUsageCount(discount.getMaxUsageCount())
-            .currentUsageCount(discount.getCurrentUsageCount())
-            .isCurrentlyValid(discount.isCurrentlyValid())
-            .hasExpired(discount.hasExpired())
-            .canBeApplied(discount.canBeApplied())
+            .validFrom(discount.getValidFrom())
+            .validUntil(discount.getValidUntil())
             .createdAt(discount.getCreatedAt())
-            .updatedAt(discount.getUpdatedAt())
+            .valid(discount.isValid())
+            .expired(discount.isExpired())
             .build();
-    }
-
-    /**
-     * Inner class representing the result of a discount application
-     */
-    public static class DiscountApplicationResult {
-        private final String discountCode;
-        private final BigDecimal discountPercentage;
-        private final BigDecimal discountAmount;
-        private final BigDecimal finalPrice;
-
-        public DiscountApplicationResult(String discountCode, BigDecimal discountPercentage,
-                                       BigDecimal discountAmount, BigDecimal finalPrice) {
-            this.discountCode = discountCode;
-            this.discountPercentage = discountPercentage;
-            this.discountAmount = discountAmount;
-            this.finalPrice = finalPrice;
-        }
-
-        public String getDiscountCode() {
-            return discountCode;
-        }
-
-        public BigDecimal getDiscountPercentage() {
-            return discountPercentage;
-        }
-
-        public BigDecimal getDiscountAmount() {
-            return discountAmount;
-        }
-
-        public BigDecimal getFinalPrice() {
-            return finalPrice;
-        }
     }
 }

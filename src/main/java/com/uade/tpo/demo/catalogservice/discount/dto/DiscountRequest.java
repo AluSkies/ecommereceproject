@@ -1,5 +1,6 @@
 package com.uade.tpo.demo.catalogservice.discount.dto;
 
+import com.uade.tpo.demo.catalogservice.discount.domain.DiscountType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,18 +10,19 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * DTO for creating/updating discounts (client input)
- * Only contains fields that client should provide
+ * DTO for creating/updating discounts (client input).
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class DiscountRequest {
-    private String code;                    // Unique discount code
-    private String description;             // Human-readable description
-    private BigDecimal discountPercentage;  // Percentage (0-100)
-    private LocalDateTime validFromDate;    // When discount becomes valid
-    private LocalDateTime validUntilDate;   // When discount expires
-    private Integer maxUsageCount;          // Maximum uses (null = unlimited)
+    private String code;
+    private String description;
+    private DiscountType discountType;
+    private BigDecimal discountValue;
+    private BigDecimal minPurchase;
+    private Integer maxUses;
+    private LocalDateTime validFrom;
+    private LocalDateTime validUntil;
 }

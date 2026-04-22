@@ -2,66 +2,26 @@ package com.uade.tpo.demo.purchaseservice.repository;
 
 import com.uade.tpo.demo.purchaseservice.domain.CartStatus;
 import com.uade.tpo.demo.purchaseservice.entity.Cart;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+/**
+ * JPA repository for Cart.
+ * Exposes lookups for the "first active cart for a user/guest" pattern used by
+ * {@link com.uade.tpo.demo.purchaseservice.service.CartService}. The schema
+ * keeps (user_id, status) as a non-unique index, so application code is
+ * responsible for enforcing "one ACTIVE cart per user" — these finders return
+ * the first match if multiple ever exist.
+ */
 @Repository
-public class CartRepository {
+public interface CartRepository extends JpaRepository<Cart, Integer> {
 
-    private final List<Cart> carts = new ArrayList<>();
-    private Integer nextId = 1;
+    Optional<Cart> findFirstByUserIdAndStatus(Long userId, CartStatus status);
 
-    public Cart save(Cart cart) {
-        if (cart.getId() == null) {
-            cart.setId(nextId++);
-            carts.add(cart);
-        } else {
-            int index = -1;
-            for (int i = 0; i < carts.size(); i++) {
-                if (carts.get(i).getId().equals(cart.getId())) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index >= 0) carts.set(index, cart);
-        }
-        return cart;
-    }
+    Optional<Cart> findFirstByGuestTokenAndStatus(String guestToken, CartStatus status);
 
-    public Optional<Cart> findById(Integer id) {
-        return carts.stream().filter(c -> c.getId().equals(id)).findFirst();
-    }
-
-    public Optional<Cart> findActiveByCustomerId(Integer customerId) {
-        return carts.stream()
-            .filter(c -> customerId.equals(c.getCustomerId())
-                && CartStatus.ACTIVE.equals(c.getStatus()))
-            .findFirst();
-    }
-
-    public Optional<Cart> findActiveByGuestToken(String guestToken) {
-        return carts.stream()
-            .filter(c -> guestToken.equals(c.getGuestToken())
-                && CartStatus.ACTIVE.equals(c.getStatus()))
-            .findFirst();
-    }
-
-    public List<Cart> findByCustomerId(Integer customerId) {
-        return carts.stream()
-            .filter(c -> customerId.equals(c.getCustomerId()))
-            .collect(Collectors.toList());
-    }
-
-    public void expireOldCarts() {
-        carts.stream()
-            .filter(c -> CartStatus.ACTIVE.equals(c.getStatus())
-                && c.getExpiresAt() != null
-                && c.getExpiresAt().isBefore(LocalDateTime.now()))
-            .forEach(c -> c.setStatus(CartStatus.ABANDONED));
-    }
+    List<Cart> findByUserId(Long userId);
 }

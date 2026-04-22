@@ -1,6 +1,7 @@
 package com.uade.tpo.demo.catalogservice.discount.dto;
 
 import com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus;
+import com.uade.tpo.demo.catalogservice.discount.domain.DiscountType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * DTO for discount responses (server output)
- * Contains all fields including server-generated metadata
+ * DTO for discount responses (server output).
+ * Includes computed {@code valid}/{@code expired} flags so clients don't need
+ * to re-implement the validation rules in JS.
  */
 @Data
 @NoArgsConstructor
@@ -21,15 +23,15 @@ public class DiscountResponse {
     private Integer id;
     private String code;
     private String description;
-    private BigDecimal discountPercentage;
+    private DiscountType discountType;
+    private BigDecimal discountValue;
+    private BigDecimal minPurchase;
+    private Integer maxUses;
+    private Integer usesCount;
     private DiscountStatus status;
-    private LocalDateTime validFromDate;
-    private LocalDateTime validUntilDate;
-    private Integer maxUsageCount;
-    private Integer currentUsageCount;
-    private Boolean isCurrentlyValid;       // Computed field: is discount valid now?
-    private Boolean hasExpired;             // Computed field: has discount expired?
-    private Boolean canBeApplied;           // Computed field: can discount be applied now?
+    private LocalDateTime validFrom;
+    private LocalDateTime validUntil;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Boolean valid;
+    private Boolean expired;
 }

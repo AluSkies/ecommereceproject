@@ -8,10 +8,10 @@ import java.math.BigDecimal;
 @Data
 @Builder
 public class OrderItemResponse {
+    private Long id;
     private Integer productId;
     private String productName;
-    private String productSku;
     private BigDecimal unitPrice;
     private Integer quantity;
-    private BigDecimal subtotal;
+    private BigDecimal lineTotal;
 }

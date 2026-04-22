@@ -1,6 +1,5 @@
-package com.uade.tpo.demo.purchaseservice.entity;
+package com.uade.tpo.demo.catalogservice.entity;
 
-import com.uade.tpo.demo.catalogservice.entity.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,42 +16,36 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.math.BigDecimal;
-
 /**
- * OrderItem JPA entity mapped to the order_items table.
- * Snapshot of a product at the moment the order was placed.
+ * Product image entity mapped to {@code product_images} table.
+ *
+ * <p>The bidirectional relation with {@link Product} uses
+ * {@link EqualsAndHashCode}/{@link ToString} exclusion of the back-reference to
+ * avoid infinite recursion when Lombok generates equals, hashCode and toString.</p>
  */
 @Entity
-@Table(name = "order_items")
+@Table(name = "product_images")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"order", "product"})
-public class OrderItem {
+@ToString(exclude = "product")
+public class ProductImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    private Long id;
+    private Integer id;
 
-    @Column(name = "product_name", length = 150)
-    private String productName;
+    @Column(nullable = false, length = 500)
+    private String url;
 
-    @Column(name = "unit_price", precision = 12, scale = 2)
-    private BigDecimal unitPrice;
+    @Column(name = "sort_order")
+    private Integer sortOrder;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(name = "line_total", precision = 12, scale = 2)
-    private BigDecimal lineTotal;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @Column(name = "alt_text", length = 255)
+    private String altText;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

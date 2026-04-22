@@ -1,32 +1,17 @@
 package com.uade.tpo.demo.repository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.uade.tpo.demo.entity.Category;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 
-import com.uade.tpo.demo.entity.Category;
+@Repository
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
-public class CategoryRepository {
-    private ArrayList<Category> categories;
+    Optional<Category> findByCode(String code);
 
-    public CategoryRepository() {
-        categories = new ArrayList<Category>(
-            Arrays.asList(new Category(1, "Deportivos"),
-                new Category(2, "Inteligentes"),
-                new Category(3, "de lujo")));
-    }
+    Optional<Category> findBySlug(String slug);
 
-    public ArrayList<Category> getCategories() {
-        return this.categories;
-    }
-
-    public Optional<Category> getCategoryById(int categoryId) {
-        return this.categories.stream().filter(m -> m.getId() == categoryId).findAny();
-    }
-
-    public Category createCategory(int newCategoryId, String description) {
-        Category newCategory = new Category(newCategoryId, description);
-        this.categories.add(newCategory);
-        return newCategory;
-    }
+    boolean existsByCode(String code);
 }

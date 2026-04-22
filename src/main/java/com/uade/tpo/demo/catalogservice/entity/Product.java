@@ -1,62 +1,98 @@
 package com.uade.tpo.demo.catalogservice.entity;
 
 import com.uade.tpo.demo.catalogservice.domain.ProductStatus;
-import com.uade.tpo.demo.catalogservice.domain.WatchCategory;
+import com.uade.tpo.demo.entity.Category;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "products")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "images")
 public class Product {
-    private Integer id;
-    private String sku;
-    private String name;
-    private String slug;
-    private String description;
-    private BigDecimal price;
-    private BigDecimal compareAtPrice;
-    private Integer stock;
-    private ProductStatus status;
-    private WatchCategory category;
-    private Long brandId;
-    private String caliber;
-    private String caseSize;
-    private String strapMaterial;
-    private List<Image> images;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    public Product(Integer id, String sku, String name, String slug, String description,
-                   BigDecimal price, BigDecimal compareAtPrice, Integer stock,
-                   ProductStatus status, WatchCategory category, Long brandId,
-                   String caliber, String caseSize, String strapMaterial) {
-        this.id = id;
-        this.sku = sku;
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
-        this.price = price;
-        this.compareAtPrice = compareAtPrice;
-        this.stock = stock != null ? stock : 0;
-        this.status = status;
-        this.category = category;
-        this.brandId = brandId;
-        this.caliber = caliber;
-        this.caseSize = caseSize;
-        this.strapMaterial = strapMaterial;
-        this.images = new ArrayList<>();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(unique = true, length = 50, nullable = false)
+    private String sku;
+
+    @Column(nullable = false, length = 150)
+    private String name;
+
+    @Column(unique = true, length = 150)
+    private String slug;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "compare_at_price", precision = 12, scale = 2)
+    private BigDecimal compareAtPrice;
+
+    @Column(nullable = false)
+    private Integer stock;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private ProductStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @Column(name = "brand_id")
+    private Long brandId;
+
+    @Column(length = 80)
+    private String caliber;
+
+    @Column(name = "case_size", length = 80)
+    private String caseSize;
+
+    @Column(name = "strap_material", length = 80)
+    private String strapMaterial;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductImage> images = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     /**
      * Update product price and refresh timestamp
@@ -75,12 +111,14 @@ public class Product {
     }
 
     /**
-     * Add an image to the product
+     * Add an image to the product and wire the back-reference so
+     * cascade persistence works without additional bookkeeping.
      */
-    public void addImage(Image image) {
+    public void addImage(ProductImage image) {
         if (this.images == null) {
             this.images = new ArrayList<>();
         }
+        image.setProduct(this);
         this.images.add(image);
     }
 
@@ -88,14 +126,14 @@ public class Product {
      * Check if product is currently available for purchase
      */
     public boolean isAvailable() {
-        return ProductStatus.ACTIVE == this.status && this.stock > 0;
+        return ProductStatus.ACTIVE == this.status && this.stock != null && this.stock > 0;
     }
 
     /**
      * Check if product has available stock
      */
     public boolean hasStock() {
-        return this.stock > 0;
+        return this.stock != null && this.stock > 0;
     }
 
     /**
@@ -111,15 +149,5 @@ public class Product {
     public void setProductStatus(ProductStatus newStatus) {
         this.status = newStatus;
         this.updatedAt = LocalDateTime.now();
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class Image {
-        private String url;
-        private Integer sortOrder;
-        private String altText;
     }
 }

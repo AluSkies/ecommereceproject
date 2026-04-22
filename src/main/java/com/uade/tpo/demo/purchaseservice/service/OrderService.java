@@ -1,18 +1,29 @@
 package com.uade.tpo.demo.purchaseservice.service;
 
+import com.uade.tpo.demo.catalogservice.discount.entity.Discount;
+import com.uade.tpo.demo.catalogservice.discount.service.DiscountService;
+import com.uade.tpo.demo.catalogservice.entity.Product;
 import com.uade.tpo.demo.purchaseservice.domain.CartStatus;
 import com.uade.tpo.demo.purchaseservice.domain.OrderStatus;
-import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.order.CheckoutRequest;
 import com.uade.tpo.demo.purchaseservice.dto.order.OrderItemResponse;
 import com.uade.tpo.demo.purchaseservice.dto.order.OrderResponse;
 import com.uade.tpo.demo.purchaseservice.dto.order.OrderStatusHistoryResponse;
-import com.uade.tpo.demo.purchaseservice.entity.Discount;
+import com.uade.tpo.demo.purchaseservice.entity.Cart;
+import com.uade.tpo.demo.purchaseservice.entity.CartItem;
 import com.uade.tpo.demo.purchaseservice.entity.Order;
 import com.uade.tpo.demo.purchaseservice.entity.OrderItem;
 import com.uade.tpo.demo.purchaseservice.entity.OrderStatusHistory;
+import com.uade.tpo.demo.purchaseservice.exception.CarritoInactivoException;
+import com.uade.tpo.demo.purchaseservice.exception.CarritoNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.ProductoNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.SolicitudInvalidaException;
+import com.uade.tpo.demo.purchaseservice.exception.StockInsuficienteException;
+import com.uade.tpo.demo.purchaseservice.repository.CartRepository;
 import com.uade.tpo.demo.purchaseservice.repository.OrderRepository;
+import com.uade.tpo.demo.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,46 +31,71 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class OrderService {
 
     private static final BigDecimal SHIPPING_COST = new BigDecimal("15.00");
-    private static final BigDecimal TAX_RATE = new BigDecimal("0.21"); // 21% IVA
+    private static final BigDecimal TAX_RATE = new BigDecimal("0.21");
     private static final String CURRENCY = "ARS";
 
     private final OrderRepository orderRepository;
-    private final CartService cartService;
+    private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
     private final DiscountService discountService;
-    private final AtomicInteger orderCounter = new AtomicInteger(1000);
 
-    public OrderService(OrderRepository orderRepository, CartService cartService, DiscountService discountService) {
+    public OrderService(OrderRepository orderRepository,
+                        CartRepository cartRepository,
+                        ProductRepository productRepository,
+                        DiscountService discountService) {
         this.orderRepository = orderRepository;
-        this.cartService = cartService;
+        this.cartRepository = cartRepository;
+        this.productRepository = productRepository;
         this.discountService = discountService;
     }
 
     public OrderResponse checkout(CheckoutRequest request) {
-        CartResponse cart = cartService.getCartById(request.getCartId());
+        if (request == null || request.getCartId() == null) {
+            throw new SolicitudInvalidaException("El cartId es obligatorio");
+        }
+
+        Cart cart = cartRepository.findById(request.getCartId())
+            .orElseThrow(() -> new CarritoNoEncontradoException(request.getCartId()));
 
         if (!CartStatus.ACTIVE.equals(cart.getStatus())) {
-            throw new IllegalStateException("El carrito no está activo");
+            throw new CarritoInactivoException(cart.getId(), cart.getStatus());
         }
-        if (cart.getItems().isEmpty()) {
-            throw new IllegalStateException("El carrito está vacío");
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new SolicitudInvalidaException("El carrito está vacío");
         }
 
-        BigDecimal subtotal = cart.getSubtotal();
+        // Stock check + subtotal
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            if (product == null) {
+                throw new ProductoNoEncontradoException((Integer) null);
+            }
+            if (product.getStock() == null || product.getStock() < item.getQuantity()) {
+                throw new StockInsuficienteException(product.getId(),
+                    item.getQuantity(), product.getStock() != null ? product.getStock() : 0);
+            }
+            BigDecimal unit = item.getUnitPrice() != null ? item.getUnitPrice() : product.getPrice();
+            subtotal = subtotal.add(unit.multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        // Discount
         BigDecimal discountTotal = BigDecimal.ZERO;
-
+        Discount appliedDiscount = null;
         if (request.getDiscountCode() != null && !request.getDiscountCode().isBlank()) {
-            Optional<Discount> discount = discountService.findValidByCode(request.getDiscountCode());
-            if (discount.isPresent()) {
-                discountTotal = subtotal
-                    .multiply(discount.get().getPercentage())
-                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            Optional<Discount> valid = discountService.findValidByCode(request.getDiscountCode());
+            if (valid.isPresent()) {
+                appliedDiscount = valid.get();
+                discountTotal = appliedDiscount.calculateDiscount(subtotal)
+                    .setScale(2, RoundingMode.HALF_UP);
             }
         }
 
@@ -67,111 +103,119 @@ public class OrderService {
         BigDecimal taxTotal = afterDiscount.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal grandTotal = afterDiscount.add(taxTotal).add(SHIPPING_COST);
 
-        String shippingSnapshot = buildShippingSnapshot(request);
-
-        List<OrderItem> orderItems = cart.getItems().stream()
-            .map(item -> OrderItem.builder()
-                .productId(item.getProductId())
-                .productName(item.getProductName())
-                .productSku(item.getProductSku())
-                .unitPrice(item.getUnitPrice())
-                .quantity(item.getQuantity())
-                .subtotal(item.getLineTotal())
-                .build())
-            .collect(Collectors.toList());
+        Long userId = cart.getUserId() != null
+            ? cart.getUserId()
+            : (request.getCustomerId() != null ? request.getCustomerId().longValue() : null);
 
         Order order = Order.builder()
             .orderNumber(generateOrderNumber())
-            .customerId(request.getCustomerId())
+            .userId(userId)
             .status(OrderStatus.PENDING)
-            .items(orderItems)
             .subtotal(subtotal)
             .discountTotal(discountTotal)
             .shippingTotal(SHIPPING_COST)
             .taxTotal(taxTotal)
             .grandTotal(grandTotal)
             .currency(CURRENCY)
-            .shippingSnapshot(shippingSnapshot)
+            .shippingSnapshot(buildShippingSnapshot(request))
             .placedAt(LocalDateTime.now())
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
             .build();
 
-        OrderStatusHistory initialHistory = OrderStatusHistory.builder()
+        // Build OrderItems, wire back-reference, decrement stock
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            BigDecimal unit = item.getUnitPrice() != null ? item.getUnitPrice() : product.getPrice();
+            BigDecimal lineTotal = unit.multiply(BigDecimal.valueOf(item.getQuantity()));
+
+            OrderItem orderItem = OrderItem.builder()
+                .product(product)
+                .productName(product.getName())
+                .unitPrice(unit)
+                .quantity(item.getQuantity())
+                .lineTotal(lineTotal)
+                .build();
+            order.addItem(orderItem);
+
+            product.setStock(product.getStock() - item.getQuantity());
+            productRepository.save(product);
+        }
+
+        // Initial status history
+        OrderStatusHistory initial = OrderStatusHistory.builder()
             .previousStatus(null)
             .newStatus(OrderStatus.PENDING)
             .note("Orden creada")
-            .createdAt(LocalDateTime.now())
+            .changedBy(userId)
             .build();
-        order.getStatusHistory().add(initialHistory);
+        order.addStatusHistory(initial);
 
         Order saved = orderRepository.save(order);
 
-        // Sincronizar IDs de items y historial con el ID de la orden
-        saved.getItems().forEach(item -> item.setOrderId(saved.getId()));
-        saved.getStatusHistory().forEach(h -> h.setOrderId(saved.getId()));
+        // Mark cart converted
+        cart.setStatus(CartStatus.CONVERTED);
+        cartRepository.save(cart);
 
-        cartService.markAsConverted(request.getCartId());
+        // Record discount usage if applied
+        if (appliedDiscount != null) {
+            appliedDiscount.setUsesCount(
+                (appliedDiscount.getUsesCount() != null ? appliedDiscount.getUsesCount() : 0) + 1);
+        }
 
         return toResponse(saved);
     }
 
-    public OrderResponse getOrder(Integer id) {
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(Long id) {
         Order order = orderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
         return toResponse(order);
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse getOrderByNumber(String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + orderNumber));
         return toResponse(order);
     }
 
-    public List<OrderResponse> getOrdersByCustomer(Integer customerId) {
-        return orderRepository.findByCustomerId(customerId).stream()
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByCustomer(Long userId) {
+        return orderRepository.findByUserId(userId).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
-    public OrderResponse updateStatus(Integer id, OrderStatus newStatus, String note, Integer changedBy) {
+    public OrderResponse updateStatus(Long id, OrderStatus newStatus, String note, Long changedBy) {
         Order order = orderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
 
-        OrderStatus previousStatus = order.getStatus();
-
-        if (!isValidTransition(previousStatus, newStatus)) {
+        OrderStatus previous = order.getStatus();
+        if (!isValidTransition(previous, newStatus)) {
             throw new IllegalStateException(
-                "Transición de estado inválida: " + previousStatus + " → " + newStatus);
+                "Transición de estado inválida: " + previous + " → " + newStatus);
         }
 
         order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        if (newStatus == OrderStatus.DELIVERED || newStatus == OrderStatus.CANCELLED) {
-            order.setUpdatedAt(LocalDateTime.now());
-        }
 
         OrderStatusHistory history = OrderStatusHistory.builder()
-            .orderId(order.getId())
-            .previousStatus(previousStatus)
+            .previousStatus(previous)
             .newStatus(newStatus)
             .changedBy(changedBy)
             .note(note)
-            .createdAt(LocalDateTime.now())
             .build();
-        order.getStatusHistory().add(history);
+        order.addStatusHistory(history);
 
         return toResponse(orderRepository.save(order));
     }
 
-    public OrderResponse cancelOrder(Integer id, String reason, Integer changedBy) {
+    public OrderResponse cancelOrder(Long id, String reason, Long changedBy) {
         Order order = orderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
 
@@ -179,10 +223,19 @@ public class OrderService {
             throw new IllegalStateException("No se puede cancelar una orden ya enviada o entregada");
         }
 
+        // Restore stock
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (product != null) {
+                product.setStock((product.getStock() != null ? product.getStock() : 0) + item.getQuantity());
+                productRepository.save(product);
+            }
+        }
+
         return updateStatus(id, OrderStatus.CANCELLED, reason, changedBy);
     }
 
-    // ---- helpers ----
+    // ---------- helpers ----------
 
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
         return switch (from) {
@@ -197,7 +250,8 @@ public class OrderService {
 
     private String generateOrderNumber() {
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        return "ORD-" + date + "-" + orderCounter.getAndIncrement();
+        int suffix = ThreadLocalRandom.current().nextInt(1000, 9999);
+        return "ORD-" + date + "-" + suffix;
     }
 
     private String buildShippingSnapshot(CheckoutRequest req) {
@@ -218,12 +272,12 @@ public class OrderService {
     private OrderResponse toResponse(Order order) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
             .map(item -> OrderItemResponse.builder()
-                .productId(item.getProductId())
+                .id(item.getId())
+                .productId(item.getProduct() != null ? item.getProduct().getId() : null)
                 .productName(item.getProductName())
-                .productSku(item.getProductSku())
                 .unitPrice(item.getUnitPrice())
                 .quantity(item.getQuantity())
-                .subtotal(item.getSubtotal())
+                .lineTotal(item.getLineTotal())
                 .build())
             .collect(Collectors.toList());
 
@@ -232,14 +286,14 @@ public class OrderService {
                 .previousStatus(h.getPreviousStatus())
                 .newStatus(h.getNewStatus())
                 .note(h.getNote())
-                .changedAt(h.getCreatedAt())
+                .changedAt(h.getChangedAt())
                 .build())
             .collect(Collectors.toList());
 
         return OrderResponse.builder()
             .id(order.getId())
             .orderNumber(order.getOrderNumber())
-            .customerId(order.getCustomerId())
+            .userId(order.getUserId())
             .status(order.getStatus())
             .items(itemResponses)
             .subtotal(order.getSubtotal())

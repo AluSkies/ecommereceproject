@@ -1,179 +1,37 @@
 package com.uade.tpo.demo.repository;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import com.uade.tpo.demo.catalogservice.domain.ProductStatus;
+import com.uade.tpo.demo.catalogservice.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.uade.tpo.demo.catalogservice.domain.ProductStatus;
-import com.uade.tpo.demo.catalogservice.domain.WatchCategory;
-import com.uade.tpo.demo.catalogservice.entity.Product;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
-public class ProductRepository {
-    private final List<Product> products;
-    private Integer nextId = 1;
+public interface ProductRepository extends JpaRepository<Product, Integer> {
 
-    public ProductRepository() {
-        this.products = new ArrayList<>();
-        initializeSampleData();
-    }
+    Optional<Product> findBySku(String sku);
 
-    private void initializeSampleData() {
-        // Sample luxury watch
-        Product watch1 = new Product(
-            nextId++, "ROLEX-001", "Rolex Submariner", "rolex-submariner",
-            "Iconic dive watch with precision engineering",
-            new BigDecimal("9500.00"), new BigDecimal("10000.00"), 15,
-            ProductStatus.ACTIVE, WatchCategory.LUXURY, 1L,
-            "3235 Perpetual Rotor", "40mm", "Oyster steel/gold"
-        );
-        watch1.addImage(new Product.Image("https://example.com/rolex1.jpg", 1, "Rolex Submariner front"));
-        watch1.addImage(new Product.Image("https://example.com/rolex2.jpg", 2, "Rolex Submariner back"));
-        products.add(watch1);
+    List<Product> findByStatus(ProductStatus status);
 
-        // Sample sport watch
-        Product watch2 = new Product(
-            nextId++, "SEIKO-001", "Seiko Prospex", "seiko-prospex",
-            "Professional sports watch for adventure",
-            new BigDecimal("450.00"), new BigDecimal("550.00"), 50,
-            ProductStatus.ACTIVE, WatchCategory.SPORT, 2L,
-            "4R36 Automatic", "42mm", "Stainless steel"
-        );
-        watch2.addImage(new Product.Image("https://example.com/seiko1.jpg", 1, "Seiko Prospex"));
-        products.add(watch2);
+    List<Product> findByCategory_Code(String categoryCode);
 
-        // Sample vintage watch
-        Product watch3 = new Product(
-            nextId++, "OMEGA-001", "Omega Seamaster Vintage", "omega-seamaster-vintage",
-            "Classic vintage diving watch from the 1970s",
-            new BigDecimal("2800.00"), new BigDecimal("3200.00"), 8,
-            ProductStatus.ACTIVE, WatchCategory.VINTAGE, 3L,
-            "565 Manual", "42mm", "Steel/leather"
-        );
-        products.add(watch3);
+    List<Product> findByBrandId(Long brandId);
 
-        // Sample dress watch
-        Product watch4 = new Product(
-            nextId++, "PATEK-001", "Patek Philippe Calatrava", "patek-calatrava",
-            "Elegant dress watch for formal occasions",
-            new BigDecimal("35000.00"), new BigDecimal("40000.00"), 3,
-            ProductStatus.ACTIVE, WatchCategory.DRESS, 4L,
-            "240 Q Manual", "36mm", "Gold/leather"
-        );
-        products.add(watch4);
-    }
+    List<Product> findByNameContainingIgnoreCase(String fragment);
 
-    public Product save(Product product) {
-        if (product.getId() == null) {
-            product.setId(nextId++);
-            products.add(product);
-        } else {
-            products.stream()
-                .filter(p -> p.getId().equals(product.getId()))
-                .findFirst()
-                .ifPresent(p -> {
-                    int index = products.indexOf(p);
-                    products.set(index, product);
-                });
-        }
-        return product;
-    }
+    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :min AND :max")
+    List<Product> findByPriceRange(@Param("min") BigDecimal min, @Param("max") BigDecimal max);
 
-    public Optional<Product> findById(Integer id) {
-        return products.stream()
-            .filter(p -> p.getId().equals(id))
-            .findFirst();
-    }
+    @Query("SELECT p FROM Product p WHERE p.stock > 0 AND p.stock <= :threshold")
+    List<Product> findLowStock(@Param("threshold") int threshold);
 
-    public List<Product> findAll() {
-        return new ArrayList<>(products);
-    }
+    @Query("SELECT p FROM Product p WHERE p.stock <= 0")
+    List<Product> findOutOfStock();
 
-    public List<Product> findByCategory(WatchCategory category) {
-        return products.stream()
-            .filter(p -> p.getCategory() == category)
-            .collect(Collectors.toList());
-    }
-
-    public List<Product> findByBrandId(Long brandId) {
-        return products.stream()
-            .filter(p -> p.getBrandId().equals(brandId))
-            .collect(Collectors.toList());
-    }
-
-    public List<Product> findByStatus(ProductStatus status) {
-        return products.stream()
-            .filter(p -> p.getStatus() == status)
-            .collect(Collectors.toList());
-    }
-
-    public List<Product> searchByName(String name) {
-        return products.stream()
-            .filter(p -> p.getName().toLowerCase().contains(name.toLowerCase()))
-            .collect(Collectors.toList());
-    }
-
-    public Optional<Product> findBySku(String sku) {
-        return products.stream()
-            .filter(p -> p.getSku().equalsIgnoreCase(sku))
-            .findFirst();
-    }
-
-    public void delete(Integer id) {
-        products.removeIf(p -> p.getId().equals(id));
-    }
-
-    public boolean existsBySku(String sku) {
-        return products.stream()
-            .anyMatch(p -> p.getSku().equalsIgnoreCase(sku));
-    }
-
-    /**
-     * Find products within a price range
-     */
-    public List<Product> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
-        return products.stream()
-            .filter(p -> p.getPrice().compareTo(minPrice) >= 0 && p.getPrice().compareTo(maxPrice) <= 0)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Find only available products (active status and stock > 0)
-     */
-    public List<Product> findAvailableProducts() {
-        return products.stream()
-            .filter(Product::isAvailable)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Find available products by category
-     */
-    public List<Product> findAvailableByCategory(WatchCategory category) {
-        return products.stream()
-            .filter(p -> p.getCategory() == category && p.isAvailable())
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Find products with low stock (stock <= threshold)
-     */
-    public List<Product> findLowStockProducts(int threshold) {
-        return products.stream()
-            .filter(p -> p.getStock() > 0 && p.getStock() <= threshold)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Find products with no stock
-     */
-    public List<Product> findOutOfStockProducts() {
-        return products.stream()
-            .filter(p -> p.getStock() <= 0)
-            .collect(Collectors.toList());
-    }
+    boolean existsBySku(String sku);
 }

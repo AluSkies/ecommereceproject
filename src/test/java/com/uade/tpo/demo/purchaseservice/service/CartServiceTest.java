@@ -1,21 +1,20 @@
 package com.uade.tpo.demo.purchaseservice.service;
 
 import com.uade.tpo.demo.catalogservice.entity.Product;
-import com.uade.tpo.demo.repository.ProductRepository;
 import com.uade.tpo.demo.purchaseservice.domain.CartStatus;
 import com.uade.tpo.demo.purchaseservice.dto.cart.AddToCartRequest;
 import com.uade.tpo.demo.purchaseservice.dto.cart.CartResponse;
 import com.uade.tpo.demo.purchaseservice.dto.cart.UpdateCartItemRequest;
 import com.uade.tpo.demo.purchaseservice.entity.Cart;
 import com.uade.tpo.demo.purchaseservice.entity.CartItem;
-import com.uade.tpo.demo.purchaseservice.exception.ArticuloNoEncontradoException;
+import com.uade.tpo.demo.purchaseservice.exception.CantidadInvalidaException;
 import com.uade.tpo.demo.purchaseservice.exception.CarritoInactivoException;
 import com.uade.tpo.demo.purchaseservice.exception.CarritoNoEncontradoException;
-import com.uade.tpo.demo.purchaseservice.exception.CantidadInvalidaException;
 import com.uade.tpo.demo.purchaseservice.exception.ProductoNoEncontradoException;
 import com.uade.tpo.demo.purchaseservice.exception.SolicitudInvalidaException;
 import com.uade.tpo.demo.purchaseservice.exception.StockInsuficienteException;
 import com.uade.tpo.demo.purchaseservice.repository.CartRepository;
+import com.uade.tpo.demo.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,7 +56,7 @@ class CartServiceTest {
 
         activeCart = Cart.builder()
             .id(1)
-            .customerId(42)
+            .userId(42L)
             .status(CartStatus.ACTIVE)
             .expiresAt(LocalDateTime.now().plusDays(7))
             .createdAt(LocalDateTime.now())
@@ -80,7 +79,8 @@ class CartServiceTest {
             AddToCartRequest req = buildRequest(42, null, 1, 2);
 
             when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
-            when(cartRepository.findActiveByCustomerId(42)).thenReturn(Optional.empty());
+            when(cartRepository.findFirstByUserIdAndStatus(42L, CartStatus.ACTIVE))
+                .thenReturn(Optional.empty());
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> {
                 Cart c = inv.getArgument(0);
                 if (c.getId() == null) c.setId(1);
@@ -99,13 +99,19 @@ class CartServiceTest {
         @Test
         @DisplayName("reutiliza el carrito activo existente y acumula cantidad si el producto ya está")
         void mergesQuantityWhenProductAlreadyInCart() {
-            CartItem existing = CartItem.builder().cartId(1).productId(1).quantity(3).build();
+            CartItem existing = CartItem.builder()
+                .cart(activeCart)
+                .product(productRolex)
+                .quantity(3)
+                .unitPrice(productRolex.getPrice())
+                .build();
             activeCart.getItems().add(existing);
 
             AddToCartRequest req = buildRequest(42, null, 1, 2);
 
             when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
-            when(cartRepository.findActiveByCustomerId(42)).thenReturn(Optional.of(activeCart));
+            when(cartRepository.findFirstByUserIdAndStatus(42L, CartStatus.ACTIVE))
+                .thenReturn(Optional.of(activeCart));
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> inv.getArgument(0));
 
             CartResponse resp = cartService.addToCart(req);
@@ -155,7 +161,8 @@ class CartServiceTest {
             AddToCartRequest req = buildRequest(null, "guest-token-abc", 1, 1);
 
             when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
-            when(cartRepository.findActiveByGuestToken("guest-token-abc")).thenReturn(Optional.empty());
+            when(cartRepository.findFirstByGuestTokenAndStatus("guest-token-abc", CartStatus.ACTIVE))
+                .thenReturn(Optional.empty());
             when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> {
                 Cart c = inv.getArgument(0);
                 if (c.getId() == null) c.setId(2);
@@ -190,7 +197,12 @@ class CartServiceTest {
         @Test
         @DisplayName("actualiza la cantidad correctamente")
         void updatesQuantity() {
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart)
+                .product(productRolex)
+                .quantity(2)
+                .unitPrice(productRolex.getPrice())
+                .build());
 
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
             when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
@@ -206,7 +218,12 @@ class CartServiceTest {
         @Test
         @DisplayName("elimina el ítem cuando la cantidad nueva es 0")
         void removesItemWhenQuantityIsZero() {
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart)
+                .product(productRolex)
+                .quantity(2)
+                .unitPrice(productRolex.getPrice())
+                .build());
 
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
             when(cartRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -214,10 +231,6 @@ class CartServiceTest {
             UpdateCartItemRequest req = new UpdateCartItemRequest();
             req.setQuantity(0);
 
-            // qty 0 is invalid per the current service (throws CantidadInvalidaException)
-            // so only quantities <=0 => exception according to addItem path. But updateItemQuantity
-            // allows <=0 by removing the item. Actually service checks getQuantity() == null => throws.
-            // Let's verify current behavior: removes item when quantity <= 0
             CartResponse resp = cartService.updateItemQuantity(1, 1, req);
             assertThat(resp.getItems()).isEmpty();
         }
@@ -248,15 +261,16 @@ class CartServiceTest {
         @Test
         @DisplayName("elimina un ítem del carrito")
         void removesItem() {
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(2).quantity(1).build());
-
             Product seiko = Product.builder()
                 .id(2).sku("SEIKO-001").name("Seiko Prospex")
                 .price(new BigDecimal("450.00")).stock(50).build();
 
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart).product(productRolex).quantity(2).unitPrice(productRolex.getPrice()).build());
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart).product(seiko).quantity(1).unitPrice(seiko.getPrice()).build());
+
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
-            when(productRepository.findById(2)).thenReturn(Optional.of(seiko));
             when(cartRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             CartResponse resp = cartService.removeItem(1, 1);
@@ -307,15 +321,16 @@ class CartServiceTest {
         @Test
         @DisplayName("calcula el subtotal correctamente sumando líneas")
         void calculatesSubtotalCorrectly() {
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(1).quantity(2).build());
             Product seiko = Product.builder()
                 .id(2).sku("SEIKO-001").name("Seiko Prospex")
                 .price(new BigDecimal("450.00")).stock(50).build();
-            activeCart.getItems().add(CartItem.builder().cartId(1).productId(2).quantity(1).build());
+
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart).product(productRolex).quantity(2).unitPrice(productRolex.getPrice()).build());
+            activeCart.getItems().add(CartItem.builder()
+                .cart(activeCart).product(seiko).quantity(1).unitPrice(seiko.getPrice()).build());
 
             when(cartRepository.findById(1)).thenReturn(Optional.of(activeCart));
-            when(productRepository.findById(1)).thenReturn(Optional.of(productRolex));
-            when(productRepository.findById(2)).thenReturn(Optional.of(seiko));
 
             CartResponse resp = cartService.getCartById(1);
 

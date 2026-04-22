@@ -42,17 +42,17 @@ class OrderControllerTest {
     @BeforeEach
     void setUp() {
         OrderItemResponse item = OrderItemResponse.builder()
-            .productId(1).productName("Rolex Submariner").productSku("ROLEX-001")
+            .id(1L).productId(1).productName("Rolex Submariner")
             .unitPrice(new BigDecimal("9500.00")).quantity(1)
-            .subtotal(new BigDecimal("9500.00")).build();
+            .lineTotal(new BigDecimal("9500.00")).build();
 
         OrderStatusHistoryResponse histEntry = OrderStatusHistoryResponse.builder()
             .previousStatus(null).newStatus(OrderStatus.PENDING)
             .note("Orden creada").changedAt(LocalDateTime.now()).build();
 
         sampleOrder = OrderResponse.builder()
-            .id(1).orderNumber("ORD-20260420-1000")
-            .customerId(42).status(OrderStatus.PENDING)
+            .id(1L).orderNumber("ORD-20260420-1000")
+            .userId(42L).status(OrderStatus.PENDING)
             .items(List.of(item))
             .subtotal(new BigDecimal("9500.00"))
             .discountTotal(BigDecimal.ZERO)
@@ -67,10 +67,6 @@ class OrderControllerTest {
             .statusHistory(List.of(histEntry))
             .build();
     }
-
-    // ──────────────────────────────────────────────────
-    // POST /api/v1/orders/checkout
-    // ──────────────────────────────────────────────────
 
     @Nested
     @DisplayName("POST /api/v1/orders/checkout")
@@ -96,7 +92,7 @@ class OrderControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.orderNumber").value("ORD-20260420-1000"))
-                .andExpect(jsonPath("$.customerId").value(42))
+                .andExpect(jsonPath("$.userId").value(42))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.currency").value("ARS"))
                 .andExpect(jsonPath("$.items").isArray())
@@ -112,9 +108,8 @@ class OrderControllerTest {
                 .thenThrow(new IllegalStateException("El carrito no está activo"));
 
             CheckoutRequest req = new CheckoutRequest();
-            req.setCartId(99);
+            req.setCartId(1);
             req.setCustomerId(42);
-            req.setCountryCode("AR");
 
             mockMvc.perform(post("/api/v1/orders/checkout")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -131,7 +126,6 @@ class OrderControllerTest {
             CheckoutRequest req = new CheckoutRequest();
             req.setCartId(1);
             req.setCustomerId(42);
-            req.setCountryCode("AR");
 
             mockMvc.perform(post("/api/v1/orders/checkout")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -143,8 +137,8 @@ class OrderControllerTest {
         @DisplayName("201 con descuento aplicado cuando el código es válido")
         void returns201WithDiscountApplied() throws Exception {
             OrderResponse discountedOrder = OrderResponse.builder()
-                .id(2).orderNumber("ORD-20260420-1001")
-                .customerId(42).status(OrderStatus.PENDING)
+                .id(2L).orderNumber("ORD-20260420-1001")
+                .userId(42L).status(OrderStatus.PENDING)
                 .items(List.of())
                 .subtotal(new BigDecimal("10400.00"))
                 .discountTotal(new BigDecimal("1040.00"))
@@ -175,10 +169,6 @@ class OrderControllerTest {
         }
     }
 
-    // ──────────────────────────────────────────────────
-    // GET /api/v1/orders/{id}
-    // ──────────────────────────────────────────────────
-
     @Nested
     @DisplayName("GET /api/v1/orders/{id}")
     class GetOrder {
@@ -186,7 +176,7 @@ class OrderControllerTest {
         @Test
         @DisplayName("200 con la orden encontrada")
         void returns200WithOrder() throws Exception {
-            when(orderService.getOrder(1)).thenReturn(sampleOrder);
+            when(orderService.getOrder(1L)).thenReturn(sampleOrder);
 
             mockMvc.perform(get("/api/v1/orders/1"))
                 .andExpect(status().isOk())
@@ -200,17 +190,13 @@ class OrderControllerTest {
         @Test
         @DisplayName("404 si la orden no existe")
         void returns404WhenNotFound() throws Exception {
-            when(orderService.getOrder(999))
+            when(orderService.getOrder(999L))
                 .thenThrow(new IllegalArgumentException("Orden no encontrada: 999"));
 
             mockMvc.perform(get("/api/v1/orders/999"))
                 .andExpect(status().isNotFound());
         }
     }
-
-    // ──────────────────────────────────────────────────
-    // GET /api/v1/orders/number/{orderNumber}
-    // ──────────────────────────────────────────────────
 
     @Nested
     @DisplayName("GET /api/v1/orders/number/{orderNumber}")
@@ -224,7 +210,7 @@ class OrderControllerTest {
             mockMvc.perform(get("/api/v1/orders/number/ORD-20260420-1000"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderNumber").value("ORD-20260420-1000"))
-                .andExpect(jsonPath("$.customerId").value(42));
+                .andExpect(jsonPath("$.userId").value(42));
         }
 
         @Test
@@ -238,10 +224,6 @@ class OrderControllerTest {
         }
     }
 
-    // ──────────────────────────────────────────────────
-    // GET /api/v1/orders/customer/{customerId}
-    // ──────────────────────────────────────────────────
-
     @Nested
     @DisplayName("GET /api/v1/orders/customer/{customerId}")
     class GetOrdersByCustomer {
@@ -249,20 +231,20 @@ class OrderControllerTest {
         @Test
         @DisplayName("200 con lista de órdenes del cliente")
         void returns200WithCustomerOrders() throws Exception {
-            when(orderService.getOrdersByCustomer(42)).thenReturn(List.of(sampleOrder));
+            when(orderService.getOrdersByCustomer(42L)).thenReturn(List.of(sampleOrder));
 
             mockMvc.perform(get("/api/v1/orders/customer/42"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].customerId").value(42))
+                .andExpect(jsonPath("$[0].userId").value(42))
                 .andExpect(jsonPath("$[0].orderNumber").value("ORD-20260420-1000"));
         }
 
         @Test
         @DisplayName("200 con lista vacía si el cliente no tiene órdenes")
         void returns200WithEmptyListWhenNoOrders() throws Exception {
-            when(orderService.getOrdersByCustomer(99)).thenReturn(List.of());
+            when(orderService.getOrdersByCustomer(99L)).thenReturn(List.of());
 
             mockMvc.perform(get("/api/v1/orders/customer/99"))
                 .andExpect(status().isOk())
@@ -270,10 +252,6 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
         }
     }
-
-    // ──────────────────────────────────────────────────
-    // GET /api/v1/orders
-    // ──────────────────────────────────────────────────
 
     @Nested
     @DisplayName("GET /api/v1/orders")
@@ -303,10 +281,6 @@ class OrderControllerTest {
         }
     }
 
-    // ──────────────────────────────────────────────────
-    // PATCH /api/v1/orders/{id}/status
-    // ──────────────────────────────────────────────────
-
     @Nested
     @DisplayName("PATCH /api/v1/orders/{id}/status")
     class UpdateStatus {
@@ -315,8 +289,8 @@ class OrderControllerTest {
         @DisplayName("200 con el estado actualizado a CONFIRMED")
         void returns200OnValidTransition() throws Exception {
             OrderResponse confirmed = OrderResponse.builder()
-                .id(1).orderNumber("ORD-20260420-1000")
-                .customerId(42).status(OrderStatus.CONFIRMED)
+                .id(1L).orderNumber("ORD-20260420-1000")
+                .userId(42L).status(OrderStatus.CONFIRMED)
                 .items(List.of()).subtotal(new BigDecimal("9500.00"))
                 .discountTotal(BigDecimal.ZERO)
                 .shippingTotal(new BigDecimal("15.00"))
@@ -327,7 +301,7 @@ class OrderControllerTest {
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
                 .statusHistory(List.of()).build();
 
-            when(orderService.updateStatus(eq(1), eq(OrderStatus.CONFIRMED), anyString(), any()))
+            when(orderService.updateStatus(eq(1L), eq(OrderStatus.CONFIRMED), anyString(), any()))
                 .thenReturn(confirmed);
 
             Map<String, Object> body = Map.of(
@@ -346,7 +320,7 @@ class OrderControllerTest {
         @Test
         @DisplayName("400 en transición inválida (DELIVERED → CONFIRMED)")
         void returns400OnInvalidTransition() throws Exception {
-            when(orderService.updateStatus(eq(1), eq(OrderStatus.CONFIRMED), anyString(), any()))
+            when(orderService.updateStatus(eq(1L), eq(OrderStatus.CONFIRMED), anyString(), any()))
                 .thenThrow(new IllegalStateException("Transición inválida"));
 
             Map<String, Object> body = Map.of("status", "CONFIRMED", "note", "");
@@ -369,10 +343,6 @@ class OrderControllerTest {
         }
     }
 
-    // ──────────────────────────────────────────────────
-    // PATCH /api/v1/orders/{id}/cancel
-    // ──────────────────────────────────────────────────
-
     @Nested
     @DisplayName("PATCH /api/v1/orders/{id}/cancel")
     class CancelOrder {
@@ -381,8 +351,8 @@ class OrderControllerTest {
         @DisplayName("200 al cancelar una orden PENDING")
         void returns200OnCancelPending() throws Exception {
             OrderResponse cancelled = OrderResponse.builder()
-                .id(1).orderNumber("ORD-20260420-1000")
-                .customerId(42).status(OrderStatus.CANCELLED)
+                .id(1L).orderNumber("ORD-20260420-1000")
+                .userId(42L).status(OrderStatus.CANCELLED)
                 .items(List.of()).subtotal(new BigDecimal("9500.00"))
                 .discountTotal(BigDecimal.ZERO)
                 .shippingTotal(new BigDecimal("15.00"))
@@ -393,7 +363,7 @@ class OrderControllerTest {
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
                 .statusHistory(List.of()).build();
 
-            when(orderService.cancelOrder(eq(1), anyString(), any())).thenReturn(cancelled);
+            when(orderService.cancelOrder(eq(1L), anyString(), any())).thenReturn(cancelled);
 
             Map<String, Object> body = Map.of(
                 "reason", "Cliente solicitó cancelación",
@@ -408,12 +378,12 @@ class OrderControllerTest {
         }
 
         @Test
-        @DisplayName("400 al intentar cancelar una orden ya enviada")
+        @DisplayName("400 al intentar cancelar una orden SHIPPED")
         void returns400WhenCancellingShippedOrder() throws Exception {
-            when(orderService.cancelOrder(eq(1), anyString(), any()))
+            when(orderService.cancelOrder(eq(1L), anyString(), any()))
                 .thenThrow(new IllegalStateException("No se puede cancelar una orden ya enviada"));
 
-            Map<String, Object> body = Map.of("reason", "tarde");
+            Map<String, Object> body = Map.of("reason", "tarde", "changedBy", 42);
 
             mockMvc.perform(patch("/api/v1/orders/1/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -422,12 +392,12 @@ class OrderControllerTest {
         }
 
         @Test
-        @DisplayName("400 al intentar cancelar una orden ya entregada")
+        @DisplayName("400 al intentar cancelar una orden DELIVERED")
         void returns400WhenCancellingDeliveredOrder() throws Exception {
-            when(orderService.cancelOrder(eq(2), anyString(), any()))
+            when(orderService.cancelOrder(eq(2L), anyString(), any()))
                 .thenThrow(new IllegalStateException("No se puede cancelar una orden ya entregada"));
 
-            Map<String, Object> body = Map.of("reason", "demasiado tarde");
+            Map<String, Object> body = Map.of("reason", "muy tarde", "changedBy", 42);
 
             mockMvc.perform(patch("/api/v1/orders/2/cancel")
                     .contentType(MediaType.APPLICATION_JSON)
