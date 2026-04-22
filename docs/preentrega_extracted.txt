@@ -1,0 +1,82 @@
+PDF CONTENT - 2 pages
+
+
+======================================================================
+PAGE 1
+======================================================================
+
+Ejercicio grupal – Implementación de seguridad con JWT en la capa de acceso a datos –
+Archivo de base
+Entregables requeridos (obligatorios)
+1. PDF de entrega - máximo 5 páginas (resumen técnico y evidencias). Debe contener:
+Portada: NroGrupo, integrantes (nombre y legajo), fecha.
+o
+Diagrama de arquitectura (capas + Security Filter Chain + persistencia).
+o
+Listado completo de entidades (tal como en el DER) y mapa de correspondencia: Enti-
+o
+dad ↔ Clase Java ↔ Tabla BD.
+Tabla de endpoints: para cada endpoint listar método HTTP, URL, entidad/DTO, si re-
+o
+quiere autenticación/rol.
+Evidencias (capturas): tablas y datos visibles en Workbench; captura de login + JWT;
+o
+captura de acceso a endpoint protegido con token; captura de endpoint que falla sin
+token y con rol insuficiente (403/401).
+Link al repositorio (público) y pasos mínimos para ejecutar localmente (ver README en
+o
+el repo).
+2. ZIP con proyecto completo - archivo comprimido que contenga el proyecto tal como se debe
+ejecutar en local. Contenido mínimo del ZIP:
+Código fuente completo (carpeta src/) y pom.xml.
+o
+Archivo README.md (ver plantilla abajo).
+o
+Archivo(s) de configuración de ejemplo: application.properties.example (sin contrase-
+o
+ñas reales).
+Script o archivo .sql opcional para crear esquema y datos semilla si corresponde.
+o
+Export de colección Postman/Insomnia (.json) con las peticiones: login, endpoints pú-
+o
+blicos, endpoints protegidos con token, pruebas para roles.
+Archivo evidencias/ con capturas PNG/JPG que se muestran en el PDF (opcional pero
+o
+recomendable).
+Instrucciones claras para ejecutar y probar.
+o
+3. Repositorio Git
+Subir código a un repositorio (GitHub).
+o
+Enviar la URL en la entrega.
+o
+Si el repo es público, borrar secretos; si es privado, asegurar acceso para corrección
+o
+(invitación o credenciales temporales).
+1
+
+======================================================================
+PAGE 2
+======================================================================
+
+4. Demostración en UADE Connect
+El grupo deberá demostrar en vivo la ejecución de: login → obtención de JWT → acceso
+o
+a endpoints protegidos → verificación de la persistencia en Workbench.
+Duración sugerida: 10 minutos por grupo (presentación + preguntas).
+o
+Requisitos funcionales obligatorios (must-have)
+• Implementación de todas las entidades definidas en el DER (clases con @Entity y mapeos co-
+rrectos).
+• Endpoints CRUD para cada entidad planificada (GET, POST, PUT, DELETE) o el conjunto equiva-
+lente acordado en el DER.
+• Persistencia funcional en MySQL (tablas creadas y datos verificables).
+• Seguridad JWT integrada y operativa: emisión de token; JwtAuthFilter validando token sobre la
+Security Filter Chain; SecurityContextHolder poblado.
+• Autorización por roles: al menos 2 roles (ej. ROLE_USER, ROLE_ADMIN) con restricciones apli-
+cadas a endpoints concretos.
+• Uso de PasswordEncoder (BCrypt recomendado) y UserDetailsService que cargue usuarios des-
+de la BD.
+• Manejo básico de errores y respuestas HTTP apropiadas.
+• Colección Postman/Insomnia con las pruebas principales exportada.
+2

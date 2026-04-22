@@ -27,10 +27,10 @@ public class Product {
     private Integer stock;
     private ProductStatus status;
     private WatchCategory category;
-    private Long brandId; // Referencia ciega a Brand
-    private String caliber; // Movimiento del reloj
-    private String caseSize; // Tamaño de caja (ej: 42mm)
-    private String strapMaterial; // Material de banda (ej: leather, stainless steel)
+    private Long brandId;
+    private String caliber;
+    private String caseSize;
+    private String strapMaterial;
     private List<Image> images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -46,7 +46,7 @@ public class Product {
         this.description = description;
         this.price = price;
         this.compareAtPrice = compareAtPrice;
-        this.stock = stock;
+        this.stock = stock != null ? stock : 0;
         this.status = status;
         this.category = category;
         this.brandId = brandId;
@@ -58,21 +58,59 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Update product price and refresh timestamp
+     */
     public void updatePrice(BigDecimal newPrice) {
         this.price = newPrice;
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Update product stock and refresh timestamp
+     */
     public void updateStock(Integer newStock) {
-        this.stock = newStock;
+        this.stock = newStock != null ? newStock : 0;
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Add an image to the product
+     */
     public void addImage(Image image) {
         if (this.images == null) {
             this.images = new ArrayList<>();
         }
         this.images.add(image);
+    }
+
+    /**
+     * Check if product is currently available for purchase
+     */
+    public boolean isAvailable() {
+        return ProductStatus.ACTIVE == this.status && this.stock > 0;
+    }
+
+    /**
+     * Check if product has available stock
+     */
+    public boolean hasStock() {
+        return this.stock > 0;
+    }
+
+    /**
+     * Check if product status is active
+     */
+    public boolean isActive() {
+        return ProductStatus.ACTIVE == this.status;
+    }
+
+    /**
+     * Update product status
+     */
+    public void setProductStatus(ProductStatus newStatus) {
+        this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Data

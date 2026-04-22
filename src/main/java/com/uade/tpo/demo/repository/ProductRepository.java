@@ -131,4 +131,49 @@ public class ProductRepository {
         return products.stream()
             .anyMatch(p -> p.getSku().equalsIgnoreCase(sku));
     }
+
+    /**
+     * Find products within a price range
+     */
+    public List<Product> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        return products.stream()
+            .filter(p -> p.getPrice().compareTo(minPrice) >= 0 && p.getPrice().compareTo(maxPrice) <= 0)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Find only available products (active status and stock > 0)
+     */
+    public List<Product> findAvailableProducts() {
+        return products.stream()
+            .filter(Product::isAvailable)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Find available products by category
+     */
+    public List<Product> findAvailableByCategory(WatchCategory category) {
+        return products.stream()
+            .filter(p -> p.getCategory() == category && p.isAvailable())
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Find products with low stock (stock <= threshold)
+     */
+    public List<Product> findLowStockProducts(int threshold) {
+        return products.stream()
+            .filter(p -> p.getStock() > 0 && p.getStock() <= threshold)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Find products with no stock
+     */
+    public List<Product> findOutOfStockProducts() {
+        return products.stream()
+            .filter(p -> p.getStock() <= 0)
+            .collect(Collectors.toList());
+    }
 }
