@@ -8,9 +8,9 @@ import com.uade.tpo.demo.entity.CustomersInfo;
 
 public interface CustomersInfoRepository extends JpaRepository<CustomersInfo, Long> {
 
-    Optional<CustomersInfo> findByUser_UserId(Long userId);
+    Optional<CustomersInfo> findByUser_Id(Long id);
 
-    Optional<CustomersInfo> findByUser_Username(String username);
+    Optional<CustomersInfo> findByUser_Email(String email);
 
-    boolean existsByUser_UserId(Long userId);
+    boolean existsByUser_Id(Long id);
 }

@@ -29,7 +29,7 @@ public class CustomersInfoService {
 
     public CustomerResponse getMyCustomerInfo() {
         User user = resolveCurrentUser();
-        CustomersInfo customer = customersInfoRepository.findByUser_UserId(user.getUserId())
+        CustomersInfo customer = customersInfoRepository.findByUser_Id(user.getId())
                 .orElseGet(() -> createEmptyCustomerInfo(user));
         return toResponse(customer);
     }
@@ -43,7 +43,7 @@ public class CustomersInfoService {
 
     public CustomerResponse updateMyCustomerInfo(CustomerRequest req) {
         User user = resolveCurrentUser();
-        CustomersInfo customer = customersInfoRepository.findByUser_Username(user.getUsername())
+        CustomersInfo customer = customersInfoRepository.findByUser_Email(user.getEmail())
                 .orElseGet(() -> createEmptyCustomerInfo(user));
 
         if (req.getPhone() != null) {
@@ -63,8 +63,7 @@ public class CustomersInfoService {
                     .orElseThrow(() -> new AddressNotFoundException(
                             "Dirección no encontrada con ID: " + req.getPreferredShippingAddressId()));
             if (address.getCustomer() == null || !address.getCustomer().getId().equals(customer.getId())) {
-                throw new AddressNotFoundException(
-                        "La dirección no pertenece al cliente actual");
+                throw new AddressNotFoundException("La dirección no pertenece al cliente actual");
             }
             customer.setPreferredShippingAddress(address);
         }
@@ -85,15 +84,15 @@ public class CustomersInfoService {
         if (auth == null || auth.getName() == null) {
             throw new UserNotFoundException("Usuario no encontrado");
         }
-        return userRepository.findByUsername(auth.getName())
+        return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
     }
 
     private CustomerResponse toResponse(CustomersInfo customer) {
         return CustomerResponse.builder()
                 .id(customer.getId())
-                .userId(customer.getUser() != null ? customer.getUser().getUserId() : null)
-                .username(customer.getUser() != null ? customer.getUser().getUsername() : null)
+                .userId(customer.getUser() != null ? customer.getUser().getId() : null)
+                .username(customer.getUser() != null ? customer.getUser().getEmail() : null)
                 .phone(customer.getPhone())
                 .documentType(customer.getDocumentType())
                 .documentNumber(customer.getDocumentNumber())

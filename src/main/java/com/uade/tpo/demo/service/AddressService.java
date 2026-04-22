@@ -142,12 +142,12 @@ public class AddressService {
         if (auth == null || auth.getName() == null) {
             throw new UserNotFoundException("Usuario no encontrado");
         }
-        return userRepository.findByUsername(auth.getName())
+        return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
     }
 
     private CustomersInfo resolveOrCreateCustomer(User user) {
-        return customersInfoRepository.findByUser_UserId(user.getUserId())
+        return customersInfoRepository.findByUser_Id(user.getId())
                 .orElseGet(() -> customersInfoRepository.save(
                         CustomersInfo.builder().user(user).build()));
     }

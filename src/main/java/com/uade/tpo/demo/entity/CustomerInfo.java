@@ -1,10 +1,6 @@
 package com.uade.tpo.demo.entity;
 
 import java.util.Date;
-import java.util.List;
-
-import com.uade.tpo.demo.purchaseservice.entity.Cart;
-import com.uade.tpo.demo.purchaseservice.entity.Order;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
@@ -75,9 +70,4 @@ public class CustomerInfo {
     @Builder.Default
     private Date updatedAt = new Date();
 
-    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
-    private List<Cart> carts;
-
-    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
-    private List<Order> orders;
 }

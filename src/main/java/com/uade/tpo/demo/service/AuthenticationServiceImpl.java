@@ -9,7 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.uade.tpo.demo.config.JwtService;
+import com.uade.tpo.demo.security.JwtService;
 import com.uade.tpo.demo.entity.CustomerInfo;
 import com.uade.tpo.demo.entity.User;
 import com.uade.tpo.demo.entity.dto.AuthenticationRequest;

@@ -4,6 +4,7 @@ import com.uade.tpo.demo.exceptions.InvalidCredentialsException;
 import com.uade.tpo.demo.exceptions.UserAlreadyExistsException;
 import com.uade.tpo.demo.exceptions.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,13 +14,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import jakarta.servlet.http.HttpServletRequest;
 
-/**
- * Manejador global de excepciones para la API de carrito
- * Global exception handler for cart API
- */
 @ControllerAdvice
+@Order(1)
 @Slf4j
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class PurchaseServiceExceptionHandler extends ResponseEntityExceptionHandler {
 
     /**
      * Maneja cuando un carrito no es encontrado
