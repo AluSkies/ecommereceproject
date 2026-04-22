@@ -104,4 +104,9 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return Boolean.TRUE.equals(isActive);
     }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
 }

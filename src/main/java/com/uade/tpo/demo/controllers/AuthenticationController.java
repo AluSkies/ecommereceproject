@@ -1,4 +1,4 @@
-package com.uade.tpo.demo.controllers.auth;
+package com.uade.tpo.demo.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
