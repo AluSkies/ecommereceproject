@@ -34,3 +34,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+.DS_Store
+**/.DS_Store
+
+.mvn/wrapper/maven-wrapper.jar.DS_Store
+**/.DS_Store
