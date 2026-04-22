@@ -3,6 +3,9 @@ package com.uade.tpo.demo.entity;
 import java.util.Date;
 import java.util.List;
 
+import com.uade.tpo.demo.purchaseservice.entity.Cart;
+import com.uade.tpo.demo.purchaseservice.entity.Order;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
