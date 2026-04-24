@@ -13,6 +13,8 @@
 -- ----------------------------------------------------------------------------
 -- Wipe existing data (reverse-FK order)
 -- ----------------------------------------------------------------------------
+SET FOREIGN_KEY_CHECKS = 0;
+
 DELETE FROM order_status_history;
 DELETE FROM order_items;
 DELETE FROM orders;
@@ -27,7 +29,10 @@ UPDATE customers_info SET preferred_shipping_address_id = NULL;
 DELETE FROM addresses_others;
 DELETE FROM customers_info;
 DELETE FROM sesion_audit_log;
+DELETE FROM admin_audit_logs;
 DELETE FROM users;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Reset auto-increment counters so the seed IDs below are deterministic.
 ALTER TABLE users                 AUTO_INCREMENT = 1;
@@ -61,7 +66,8 @@ INSERT INTO customers_info (id, user_id, phone, document_type, document_number, 
 -- 3) addresses_others  (1 row)  + close the cycle on customers_info
 -- ============================================================================
 INSERT INTO addresses_others (id, customer_id, label, street, street_number, apartment, city, state, country, postal_code, is_default) VALUES
-    (1, 1, 'Casa', 'Av. Corrientes', '1234', 'Piso 3 Dpto B', 'CABA', 'CABA', 'Argentina', 'C1043AAZ', TRUE);
+    (1, 1, 'Casa',    'Av. Corrientes',     '1234', 'Piso 3 Dpto B', 'CABA', 'CABA', 'Argentina', 'C1043AAZ', TRUE),
+    (2, 1, 'Oficina', 'Av. del Libertador', '5600', NULL,            'CABA', 'CABA', 'Argentina', 'C1428ARO', FALSE);
 
 UPDATE customers_info SET preferred_shipping_address_id = 1 WHERE id = 1;
 
@@ -77,13 +83,13 @@ INSERT INTO categories (id, code, name, slug, description, active) VALUES
 -- ============================================================================
 -- 5) products  (6 rows)
 -- ============================================================================
-INSERT INTO products (id, sku, name, slug, description, price, compare_at_price, stock, status, category_id, brand_id, caliber, case_size, strap_material) VALUES
-    (1, 'ROLEX-001',    'Rolex Submariner',            'rolex-submariner',            'Icono de la relojería deportiva, sumergible hasta 300m.',     9500.00, NULL,    5,  'ACTIVE', 1, 1,    'Calibre 3235', '41mm',   'Acero Oystersteel'),
-    (2, 'OMEGA-001',    'Omega Speedmaster',           'omega-speedmaster',           'El legendario Moonwatch, cronógrafo manual profesional.',    7200.00, 7800.00, 4,  'ACTIVE', 1, 2,    'Calibre 3861', '42mm',   'Acero inoxidable'),
-    (3, 'SEIKO-001',    'Seiko Prospex Diver',         'seiko-prospex-diver',         'Reloj buzo automático con resistencia 200m, ideal deportes.',  450.00, NULL,   20,  'ACTIVE', 2, 3,    'Calibre 4R36', '42.7mm', 'Caucho'),
-    (4, 'CASIO-001',    'Casio G-Shock GA-2100',       'casio-g-shock-ga-2100',       'El "CasiOak", resistente, ligero y con diseño octogonal.',     120.00, NULL,   50,  'ACTIVE', 2, 4,    'Módulo 5611',  '45.4mm', 'Resina'),
-    (5, 'TISSOT-001',   'Tissot Visodate Vintage',     'tissot-visodate-vintage',     'Reedición vintage con estética de los años 50.',               850.00, 950.00,  3,  'ACTIVE', 3, 5,    'ETA 2836-2',   '40mm',   'Cuero marrón'),
-    (6, 'LONGINES-001', 'Longines La Grande Classique','longines-la-grande-classique','Reloj de vestir ultrafino, elegancia atemporal.',             1600.00, NULL,    8,  'ACTIVE', 4, 6,    'L209.2',       '36mm',   'Cuero negro');
+INSERT INTO products (id, sku, name, slug, description, price, compare_at_price, stock, status, category_id, brand_id, caliber, case_size, strap_material, created_at, updated_at) VALUES
+    (1, 'ROLEX-001',    'Rolex Submariner',            'rolex-submariner',            'Icono de la relojería deportiva, sumergible hasta 300m.',     9500.00, NULL,    5,  'ACTIVE', 1, 1,    'Calibre 3235', '41mm',   'Acero Oystersteel', NOW(6), NOW(6)),
+    (2, 'OMEGA-001',    'Omega Speedmaster',           'omega-speedmaster',           'El legendario Moonwatch, cronógrafo manual profesional.',    7200.00, 7800.00, 4,  'ACTIVE', 1, 2,    'Calibre 3861', '42mm',   'Acero inoxidable',  NOW(6), NOW(6)),
+    (3, 'SEIKO-001',    'Seiko Prospex Diver',         'seiko-prospex-diver',         'Reloj buzo automático con resistencia 200m, ideal deportes.',  450.00, NULL,   20,  'ACTIVE', 2, 3,    'Calibre 4R36', '42.7mm', 'Caucho',            NOW(6), NOW(6)),
+    (4, 'CASIO-001',    'Casio G-Shock GA-2100',       'casio-g-shock-ga-2100',       'El "CasiOak", resistente, ligero y con diseño octogonal.',     120.00, NULL,   50,  'ACTIVE', 2, 4,    'Módulo 5611',  '45.4mm', 'Resina',            NOW(6), NOW(6)),
+    (5, 'TISSOT-001',   'Tissot Visodate Vintage',     'tissot-visodate-vintage',     'Reedición vintage con estética de los años 50.',               850.00, 950.00,  3,  'ACTIVE', 3, 5,    'ETA 2836-2',   '40mm',   'Cuero marrón',      NOW(6), NOW(6)),
+    (6, 'LONGINES-001', 'Longines La Grande Classique','longines-la-grande-classique','Reloj de vestir ultrafino, elegancia atemporal.',             1600.00, NULL,    8,  'ACTIVE', 4, 6,    'L209.2',       '36mm',   'Cuero negro',       NOW(6), NOW(6));
 
 -- ============================================================================
 -- 6) product_images  (2 per product -> 12 rows)
@@ -112,6 +118,10 @@ INSERT INTO discounts (id, code, description, discount_type, discount_value, min
 -- ============================================================================
 -- 8) orders  (1 historical order for buyer1)
 -- ============================================================================
+-- NOTE: The orders.status enum generated by Hibernate is
+--   PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED | REFUNDED
+-- (no PAID / FULFILLING). Keep values below aligned with the OrderStatus enum.
+--
 -- Line 1: 1 x OMEGA-001 @ 7200.00 = 7200.00
 -- Line 2: 1 x SEIKO-001 @  450.00 =  450.00
 -- subtotal        = 7650.00
@@ -136,12 +146,13 @@ INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, qua
     (2, 1, 3, 'Seiko Prospex Diver',   450.00, 1,  450.00);
 
 -- ============================================================================
--- 9) order_status_history  (3 rows)
+-- 9) order_status_history  (4 rows - full PENDING -> DELIVERED trail)
 -- ============================================================================
 INSERT INTO order_status_history (id, order_id, previous_status, new_status, changed_by, changed_at, note) VALUES
-    (1, 1, NULL,      'PENDING',   2, '2026-01-15 10:30:00', 'Orden creada por el cliente.'),
-    (2, 1, 'PENDING', 'PAID',      1, '2026-01-15 11:05:00', 'Pago confirmado por pasarela.'),
-    (3, 1, 'PAID',    'DELIVERED', 1, '2026-01-18 16:45:00', 'Entregado en domicilio - firma del receptor.');
+    (1, 1, NULL,        'PENDING',   2, '2026-01-15 10:30:00', 'Orden creada por el cliente.'),
+    (2, 1, 'PENDING',   'CONFIRMED', 1, '2026-01-15 11:05:00', 'Pago confirmado por pasarela.'),
+    (3, 1, 'CONFIRMED', 'SHIPPED',   1, '2026-01-17 09:00:00', 'Despachado por courier.'),
+    (4, 1, 'SHIPPED',   'DELIVERED', 1, '2026-01-18 16:45:00', 'Entregado en domicilio - firma del receptor.');
 
 -- ============================================================================
 -- 10) carts / cart_items  -> intentionally empty (carts are transient).
