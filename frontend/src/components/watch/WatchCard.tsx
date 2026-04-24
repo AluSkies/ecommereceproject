@@ -24,10 +24,12 @@ export function WatchCard({ watch }: WatchCardProps) {
 
       {/* Body */}
       <div className="p-4 flex flex-col gap-2 flex-1">
-        <Badge category={watch.category} />
-        <p className="text-xs tracking-widest uppercase text-ink-muted mt-1">
-          {watch.brand}
-        </p>
+        <Badge code={watch.categoryCode} label={watch.categoryName} />
+        {watch.brand ? (
+          <p className="text-xs tracking-widest uppercase text-ink-muted mt-1">
+            {watch.brand}
+          </p>
+        ) : null}
         <p className="font-display text-base text-ink-primary leading-snug">
           {watch.name}
         </p>

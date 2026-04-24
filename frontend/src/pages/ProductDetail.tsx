@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { getById, watches, type Category } from '@/data/watches'
+import { useAllWatches, useWatchById } from '@/hooks/useWatches'
 import { WatchImageGallery } from '@/components/watch/WatchImageGallery'
 import { WatchSpecs } from '@/components/watch/WatchSpecs'
 import { WatchCard } from '@/components/watch/WatchCard'
@@ -9,14 +9,24 @@ import { Button } from '@/components/ui/Button'
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
-  const watch = getById(Number(id))
+  const numericId = id ? Number(id) : undefined
+  const { data: watch, loading, error } = useWatchById(numericId)
+  const { data: allWatches } = useAllWatches()
 
-  if (!watch) {
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center text-ink-muted text-sm tracking-widest uppercase">
+        Cargando…
+      </div>
+    )
+  }
+
+  if (error || !watch) {
     return <Navigate to="/catalogo" replace />
   }
 
-  const related = watches
-    .filter((w) => w.category === watch.category && w.id !== watch.id)
+  const related = allWatches
+    .filter((w) => w.categoryCode === watch.categoryCode && w.id !== watch.id)
     .slice(0, 3)
 
   return (
@@ -26,10 +36,10 @@ export function ProductDetail() {
         <Link to="/" className="hover:text-gold transition-colors duration-300">Inicio</Link>
         <span>/</span>
         <Link
-          to={`/catalogo?categoria=${encodeURIComponent(watch.category)}`}
+          to={`/catalogo?categoria=${encodeURIComponent(watch.categoryCode)}`}
           className="hover:text-gold transition-colors duration-300"
         >
-          {watch.category}
+          {watch.categoryName}
         </Link>
         <span>/</span>
         <span className="text-ink-primary">{watch.name}</span>
@@ -43,8 +53,10 @@ export function ProductDetail() {
         {/* Info */}
         <div className="flex flex-col gap-6">
           <div>
-            <Badge category={watch.category as Category} />
-            <p className="mt-3 text-sm tracking-widest uppercase text-ink-muted">{watch.brand}</p>
+            <Badge code={watch.categoryCode} label={watch.categoryName} />
+            {watch.brand ? (
+              <p className="mt-3 text-sm tracking-widest uppercase text-ink-muted">{watch.brand}</p>
+            ) : null}
             <h1 className="mt-1 font-display text-4xl font-medium text-ink-primary leading-tight">
               {watch.name}
             </h1>
@@ -86,7 +98,7 @@ export function ProductDetail() {
               </h2>
             </div>
             <Link
-              to={`/catalogo?categoria=${encodeURIComponent(watch.category)}`}
+              to={`/catalogo?categoria=${encodeURIComponent(watch.categoryCode)}`}
               className="text-xs tracking-widest uppercase text-gold hover:text-gold-dark transition-colors duration-300"
             >
               Ver todos →

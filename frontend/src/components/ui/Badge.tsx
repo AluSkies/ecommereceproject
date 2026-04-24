@@ -1,23 +1,24 @@
-import type { Category } from '@/data/watches'
-
-const categoryClasses: Record<string, string> = {
-  'de Lujo': 'bg-gold-muted text-gold border border-gold',
-  Deportivos: 'bg-smoke text-ink-secondary border border-ash',
-  Inteligentes: 'bg-obsidian text-ink-inverse',
+const codeClasses: Record<string, string> = {
+  LUXURY: 'bg-gold-muted text-gold border border-gold',
+  SPORT: 'bg-smoke text-ink-secondary border border-ash',
+  VINTAGE: 'bg-obsidian text-ink-inverse',
+  DRESS: 'bg-smoke text-ink-primary border border-ash',
 }
 
 interface BadgeProps {
-  category: Category
+  code: string
+  label: string
   className?: string
 }
 
-export function Badge({ category, className = '' }: BadgeProps) {
-  const classes = categoryClasses[category] ?? 'bg-smoke text-ink-secondary border border-ash'
+export function Badge({ code, label, className = '' }: BadgeProps) {
+  const classes =
+    codeClasses[code] ?? 'bg-smoke text-ink-secondary border border-ash'
   return (
     <span
       className={`inline-block px-2.5 py-0.5 text-xs font-medium tracking-widest uppercase rounded-sm ${classes} ${className}`}
     >
-      {category}
+      {label}
     </span>
   )
 }

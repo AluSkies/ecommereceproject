@@ -1,39 +1,37 @@
 import { useSearchParams } from 'react-router-dom'
-import { type Category, CATEGORIES } from '@/data/watches'
-import { useWatches } from '@/hooks/useWatches'
+import { useCategories, useWatches } from '@/hooks/useWatches'
 import { WatchGrid } from '@/components/watch/WatchGrid'
 import { CategoryFilter } from '@/components/catalog/CategoryFilter'
 import { PriceRangeFilter } from '@/components/catalog/PriceRangeFilter'
 import { useState } from 'react'
 
-const allCategories = Object.values(CATEGORIES) as Category[]
-
-function isCategoryParam(val: string | null): val is Category {
-  return val !== null && (allCategories as string[]).includes(val)
-}
-
 export function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const categoryParam = searchParams.get('categoria')
-  const selectedCategory = isCategoryParam(categoryParam) ? categoryParam : null
+  const { data: categories } = useCategories()
+
+  const rawParam = searchParams.get('categoria')
+  const selectedCode = rawParam && categories.some((c) => c.code === rawParam)
+    ? rawParam
+    : null
+  const selectedCategory = categories.find((c) => c.code === selectedCode) ?? null
 
   const [priceRange, setPriceRange] = useState({ min: '', max: '' })
 
   const hasPriceFilter = priceRange.min !== '' || priceRange.max !== ''
 
   const filters = {
-    category: selectedCategory,
+    categoryCode: selectedCode,
     minPrice: priceRange.min ? Number(priceRange.min) : null,
     maxPrice: priceRange.max ? Number(priceRange.max) : null,
   }
 
-  const results = useWatches(filters)
+  const { data: results, loading, error } = useWatches(filters)
 
-  function handleCategoryChange(cat: Category | null) {
-    if (cat === null) {
+  function handleCategoryChange(code: string | null) {
+    if (code === null) {
       setSearchParams({})
     } else {
-      setSearchParams({ categoria: cat })
+      setSearchParams({ categoria: code })
     }
   }
 
@@ -42,12 +40,13 @@ export function Catalog() {
     setPriceRange({ min: '', max: '' })
   }
 
-  // Heading claro sobre qué está mostrando
+  const selectedLabel = selectedCategory?.name ?? null
+
   let headingLabel: string
-  if (selectedCategory && hasPriceFilter) {
-    headingLabel = `${selectedCategory} — con filtro de precio (${results.length})`
-  } else if (selectedCategory) {
-    headingLabel = `${selectedCategory} (${results.length} ${results.length === 1 ? 'reloj' : 'relojes'})`
+  if (selectedLabel && hasPriceFilter) {
+    headingLabel = `${selectedLabel} — con filtro de precio (${results.length})`
+  } else if (selectedLabel) {
+    headingLabel = `${selectedLabel} (${results.length} ${results.length === 1 ? 'reloj' : 'relojes'})`
   } else if (hasPriceFilter) {
     headingLabel = `Todos los relojes — con filtro de precio (${results.length})`
   } else {
@@ -66,14 +65,28 @@ export function Catalog() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-6 mb-10 pb-8 border-b border-ash">
-        <CategoryFilter selected={selectedCategory} onChange={handleCategoryChange} />
+        <CategoryFilter
+          categories={categories}
+          selectedCode={selectedCode}
+          onChange={handleCategoryChange}
+        />
         <div className="sm:ml-auto">
           <PriceRangeFilter value={priceRange} onChange={setPriceRange} />
         </div>
       </div>
 
       {/* Grid */}
-      <WatchGrid watches={results} onClearFilters={handleClearFilters} />
+      {loading ? (
+        <p className="text-ink-muted text-sm tracking-widest uppercase text-center py-24">
+          Cargando catálogo…
+        </p>
+      ) : error ? (
+        <p className="text-sm tracking-widest uppercase text-center py-24 text-red-600">
+          No se pudo cargar el catálogo — revisá que el backend esté corriendo en {import.meta.env.VITE_API_URL}
+        </p>
+      ) : (
+        <WatchGrid watches={results} onClearFilters={handleClearFilters} />
+      )}
     </section>
   )
 }

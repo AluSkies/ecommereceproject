@@ -1,36 +1,27 @@
 import { Link } from 'react-router-dom'
-import { getFeatured, CATEGORIES } from '@/data/watches'
+import { useCategories, useFeaturedWatches } from '@/hooks/useWatches'
 import { WatchGrid } from '@/components/watch/WatchGrid'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
-const featured = getFeatured()
-
-const categoryPreviews = [
-  {
-    label: CATEGORIES.LUJO,
-    image: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800&q=80',
-    description: 'Alta relojería. Cada pieza, una obra maestra.',
-  },
-  {
-    label: CATEGORIES.DEPORTIVOS,
-    image: 'https://images.unsplash.com/photo-1548171916-c8fd5d9f3f9c?w=800&q=80',
-    description: 'Construidos para el rendimiento extremo.',
-  },
-  {
-    label: CATEGORIES.INTELIGENTES,
-    image: 'https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=800&q=80',
-    description: 'Tecnología en tu muñeca. Sin compromisos.',
-  },
-]
+const categoryImageByCode: Record<string, string> = {
+  LUXURY: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800&q=80',
+  SPORT: 'https://images.unsplash.com/photo-1548171916-c8fd5d9f3f9c?w=800&q=80',
+  VINTAGE: 'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=800&q=80',
+  DRESS: 'https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=800&q=80',
+}
+const FALLBACK_CATEGORY_IMAGE =
+  'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'
 
 export function Home() {
+  const { data: featured, loading, error } = useFeaturedWatches(4)
+  const { data: categories } = useCategories()
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="relative min-h-[90vh] bg-obsidian flex items-center overflow-hidden">
-        {/* Background image */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{
@@ -38,7 +29,6 @@ export function Home() {
               "url('https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1600&q=80')",
           }}
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-transparent" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -51,7 +41,7 @@ export function Home() {
               redefinido.
             </h1>
             <p className="mt-6 text-ink-inverse/60 text-lg leading-relaxed max-w-sm">
-              Relojes de lujo, deportivos e inteligentes. Elegí el tuyo.
+              La colección completa, elegí el tuyo.
             </p>
             <div className="mt-10">
               <Button as={Link} to="/catalogo" variant="primary" size="lg">
@@ -78,57 +68,71 @@ export function Home() {
             Ver todos →
           </Link>
         </div>
-        <WatchGrid watches={featured} />
+        {loading ? (
+          <p className="text-ink-muted text-sm tracking-widest uppercase text-center py-12">
+            Cargando destacados…
+          </p>
+        ) : error ? (
+          <p className="text-sm tracking-widest uppercase text-center py-12 text-red-600">
+            No se pudo cargar el catálogo
+          </p>
+        ) : (
+          <WatchGrid watches={featured} />
+        )}
       </section>
 
       {/* ── Category previews ────────────────────────────── */}
-      <section className="bg-smoke py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Divider className="mb-4 mx-auto" />
-            <SectionTitle
-              centered
-              subtitle="Encontrá el reloj que se adapta a tu estilo"
-            >
-              Explorá por Categoría
-            </SectionTitle>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {categoryPreviews.map(({ label, image, description }) => (
-              <Link
-                key={label}
-                to={`/catalogo?categoria=${encodeURIComponent(label)}`}
-                className="group relative overflow-hidden aspect-[4/5] bg-obsidian"
+      {categories.length > 0 ? (
+        <section className="bg-smoke py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Divider className="mb-4 mx-auto" />
+              <SectionTitle
+                centered
+                subtitle="Encontrá el reloj que se adapta a tu estilo"
               >
-                <img
-                  src={image}
-                  alt={label}
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-40"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-xs tracking-[0.3em] uppercase text-gold mb-2">
-                    {label}
-                  </p>
-                  <p className="font-display text-xl text-ink-inverse leading-snug">
-                    {description}
-                  </p>
-                  <p className="mt-3 text-xs tracking-widest uppercase text-gold group-hover:translate-x-1 transition-transform duration-300">
-                    Explorar →
-                  </p>
-                </div>
-              </Link>
-            ))}
+                Explorá por Categoría
+              </SectionTitle>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.code}
+                  to={`/catalogo?categoria=${encodeURIComponent(cat.code)}`}
+                  className="group relative overflow-hidden aspect-[4/5] bg-obsidian"
+                >
+                  <img
+                    src={categoryImageByCode[cat.code] ?? FALLBACK_CATEGORY_IMAGE}
+                    alt={cat.name}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-40"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <p className="text-xs tracking-[0.3em] uppercase text-gold mb-2">
+                      {cat.name}
+                    </p>
+                    {cat.description ? (
+                      <p className="font-display text-lg text-ink-inverse leading-snug">
+                        {cat.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 text-xs tracking-widest uppercase text-gold group-hover:translate-x-1 transition-transform duration-300">
+                      Explorar →
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* ── Browse all CTA ────────────────────────────────── */}
       <section className="bg-obsidian py-20 text-center">
         <div className="max-w-xl mx-auto px-4">
           <Divider className="mb-6 mx-auto" />
-          <SectionTitle light centered subtitle="12 modelos disponibles">
+          <SectionTitle light centered subtitle="Colección completa">
             Toda la Colección
           </SectionTitle>
           <div className="mt-8">
