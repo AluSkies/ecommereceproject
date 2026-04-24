@@ -27,7 +27,7 @@ que consume esta API.
 ## Requisitos previos
 
 - **JDK 17** (OpenJDK o Temurin). Verificar con `java -version`.
-- **MySQL 8+** corriendo local o accesible por red.
+- **Docker + Docker Compose v2** para correr MySQL (alternativa: MySQL 8+ instalado nativo).
 - **Maven 3.9+** — opcional, el proyecto incluye el wrapper `./mvnw`.
 
 ---
@@ -39,34 +39,56 @@ que consume esta API.
 git clone <repo-url>
 cd ecommereceproject
 
-# 2. Crear la base de datos
-mysql -u root -p -e "CREATE DATABASE ecommerce_bd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# 3. Cargar schema y datos seed
-mysql -u root -p ecommerce_bd < src/main/resources/schema.sql
-mysql -u root -p ecommerce_bd < src/main/resources/data.sql
-
-# 4. Configurar properties
+# 2. Configurar properties
 cp src/main/resources/application.properties.example src/main/resources/application.properties
-# Editar application.properties y completar:
+# Editar application.properties y completar (los valores de DB ya matchean el compose):
 #   spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_bd
-#   spring.datasource.username=<tu_usuario>
-#   spring.datasource.password=<tu_password>
-#   application.jwt.secret=<ver paso 5>
+#   spring.datasource.username=administrator
+#   spring.datasource.password=admin1234
+#   application.jwt.secret=<ver paso 3>
 
-# 5. Generar un JWT secret seguro (256 bits o más, base64)
+# 3. Generar un JWT secret seguro (256 bits o más, base64)
 openssl rand -base64 64
 
-# 6. Ejecutar la aplicación
-./mvnw spring-boot:run
+# 4. Levantar MySQL (schema.sql y data.sql se aplican automáticamente la primera vez)
+docker compose up -d
+# Verificar que quedó healthy:
+docker compose ps
+
+# 5. Ejecutar la aplicación
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./mvnw spring-boot:run
 ```
 
 La aplicación levanta en `http://localhost:4002`.
 
-Los scripts `schema.sql` y `data.sql` (en `src/main/resources/`) crean el modelo
-de datos completo del DER (13 tablas) y siembran usuarios, categorías, productos,
-descuentos y una orden histórica de ejemplo. Ambos scripts son idempotentes —
-pueden re-ejecutarse para reinicializar la base.
+El compose define un servicio `mysql` (imagen `mysql:8.0`, contenedor
+`tempus-mysql`) con un volumen persistente `tempus-mysql-data`. Los scripts
+`schema.sql` y `data.sql` (en `src/main/resources/`) se montan en
+`/docker-entrypoint-initdb.d/` y corren **sólo la primera vez** que se crea el
+volumen — crean las 13 tablas del DER y siembran usuarios, categorías,
+productos, descuentos y una orden histórica de ejemplo.
+
+### Re-seed / reset de la base
+
+```bash
+# Re-cargar seed sin perder el volumen (idempotente)
+docker exec -i tempus-mysql mysql -u administrator -padmin1234 ecommerce_bd \
+  < src/main/resources/data.sql
+
+# Reset total (borra el volumen y vuelve a correr schema + data al arrancar)
+docker compose down -v && docker compose up -d
+```
+
+### Alternativa sin Docker
+
+Si preferís MySQL instalado nativo:
+
+```bash
+mysql -u root -p -e "CREATE DATABASE ecommerce_bd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p ecommerce_bd < src/main/resources/schema.sql
+mysql -u root -p ecommerce_bd < src/main/resources/data.sql
+# Ajustar usuario/password en application.properties al que uses.
+```
 
 > **Nota sobre `ddl-auto`:** el ejemplo viene con `spring.jpa.hibernate.ddl-auto=update`
 > para evitar fricción en desarrollo. Si preferís que JPA valide el schema contra
@@ -118,6 +140,25 @@ curl -X POST $BASE/api/v1/products \
   -H "Content-Type: application/json" \
   -d '{"sku":"TEST-001","name":"Test Watch","price":100.00,"stock":10,"categoryId":1}'
 ```
+
+---
+
+## Evidencias (capturas) — Seguridad JWT
+
+Para generar evidencias reproducibles desde la terminal (status codes + JSON),
+ejecutar el script:
+
+```bash
+cd ecommereceproject
+./scripts/evidencias-seguridad.sh
+```
+
+El script imprime una secuencia pensada para capturar pantallas:
+- Registro de usuario BUYER (201)
+- Login con JWT (200)
+- Endpoint protegido sin token (401/403)
+- Endpoint protegido con token (200)
+- Endpoint ADMIN con token BUYER (403)
 
 ### Endpoints principales
 

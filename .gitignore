@@ -42,6 +42,9 @@ build/
 .env
 .env.local
 
+### Local app config (contiene secretos — cada dev copia desde .example) ###
+src/main/resources/application.properties
+
 ### OS ###
 .DS_Store
 Thumbs.db

@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tempus-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecommerce_bd
+      MYSQL_USER: administrator
+      MYSQL_PASSWORD: admin1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - tempus-mysql-data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "administrator", "-padmin1234"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tempus-mysql-data:
