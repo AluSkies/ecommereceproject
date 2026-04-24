@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/lib/auth'
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   // Cerrar menú al hacer click fuera (comportamiento convencional)
   useEffect(() => {
@@ -16,6 +20,16 @@ export function Navbar() {
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [menuOpen])
+
+  const displayName =
+    user?.firstName?.trim() ||
+    (user?.email ? user.email.split('@')[0] : '')
+
+  async function handleLogout() {
+    setMenuOpen(false)
+    await logout()
+    navigate('/', { replace: true })
+  }
 
   return (
     <header ref={drawerRef} className="fixed top-0 left-0 right-0 z-50 bg-pearl border-b border-ash">
@@ -51,6 +65,33 @@ export function Navbar() {
           >
             Catálogo
           </NavLink>
+
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4 pl-4 border-l border-ash">
+              <span className="text-xs tracking-widest uppercase text-ink-muted">
+                Hola, <span className="text-ink-primary">{displayName}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-sm tracking-widest uppercase text-ink-muted hover:text-gold transition-colors duration-300 cursor-pointer"
+              >
+                Salir
+              </button>
+            </div>
+          ) : (
+            <NavLink
+              to="/login"
+              state={{ from: location }}
+              className={({ isActive }) =>
+                `text-sm tracking-widest uppercase transition-colors duration-300 pl-4 border-l border-ash ${
+                  isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                }`
+              }
+            >
+              Ingresar
+            </NavLink>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -94,6 +135,32 @@ export function Navbar() {
           >
             Catálogo
           </NavLink>
+
+          {isAuthenticated ? (
+            <>
+              <span className="text-xs tracking-widest uppercase text-ink-muted">
+                Hola, <span className="text-ink-primary">{displayName}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-left text-sm tracking-widest uppercase text-ink-secondary hover:text-gold cursor-pointer"
+              >
+                Salir
+              </button>
+            </>
+          ) : (
+            <NavLink
+              to="/login"
+              state={{ from: location }}
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+              }
+            >
+              Ingresar
+            </NavLink>
+          )}
         </div>
       )}
     </header>
