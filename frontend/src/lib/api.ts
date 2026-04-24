@@ -52,13 +52,27 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
   return res.json() as Promise<T>
 }
 
-export async function apiPost<TRes, TBody = unknown>(
+/** Same as apiGet but returns null on 404 instead of throwing. */
+export async function apiGetNullable<T>(path: string, signal?: AbortSignal): Promise<T | null> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { Accept: 'application/json', ...authHeaders() },
+    signal,
+  })
+  if (res.status === 404) return null
+  if (!res.ok) {
+    throw await parseError(res, `GET ${path}`)
+  }
+  return res.json() as Promise<T>
+}
+
+async function requestWithBody<TRes, TBody = unknown>(
+  method: 'POST' | 'PUT' | 'PATCH',
   path: string,
   body: TBody,
   signal?: AbortSignal,
 ): Promise<TRes> {
   const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
+    method,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -68,7 +82,28 @@ export async function apiPost<TRes, TBody = unknown>(
     signal,
   })
   if (!res.ok) {
-    throw await parseError(res, `POST ${path}`)
+    throw await parseError(res, `${method} ${path}`)
+  }
+  if (res.status === 204) return undefined as TRes
+  return res.json() as Promise<TRes>
+}
+
+export function apiPost<TRes, TBody = unknown>(path: string, body: TBody, signal?: AbortSignal) {
+  return requestWithBody<TRes, TBody>('POST', path, body, signal)
+}
+
+export function apiPut<TRes, TBody = unknown>(path: string, body: TBody, signal?: AbortSignal) {
+  return requestWithBody<TRes, TBody>('PUT', path, body, signal)
+}
+
+export async function apiDelete<TRes = void>(path: string, signal?: AbortSignal): Promise<TRes> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json', ...authHeaders() },
+    signal,
+  })
+  if (!res.ok) {
+    throw await parseError(res, `DELETE ${path}`)
   }
   if (res.status === 204) return undefined as TRes
   return res.json() as Promise<TRes>

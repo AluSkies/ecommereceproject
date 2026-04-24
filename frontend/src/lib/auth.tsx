@@ -9,6 +9,13 @@ export interface AuthUser {
   role: Role
   firstName?: string
   lastName?: string
+  phone?: string
+  line1?: string
+  line2?: string
+  city?: string
+  region?: string
+  postalCode?: string
+  countryCode?: string
 }
 
 interface AuthResponse {
