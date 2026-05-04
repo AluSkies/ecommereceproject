@@ -38,7 +38,7 @@ El scope del backend cubre los 5 dominios del DER:
 | Dominio | Tablas MySQL | Paquetes Java |
 |---|---|---|
 | Identidad & administración | `users`, `sesion_audit_log` | `auth`, `security`, `entity` (User, SessionAuditLog) |
-| Clientes & métodos de pago | `customers_info`, `addresses_others` | `service.CustomersInfoService`, `service.AddressService` |
+| Clientes & métodos de pago | `customers_info`, `addresses_others` | `service.CustomerInfoService`, `service.AddressService` |
 | Catálogo & inventario | `categories`, `products`, `product_images` | `catalogservice/*` |
 | Carrito & promociones | `carts`, `cart_items`, `discounts` | `purchaseservice/*` (cart), `catalogservice/discount/*` |
 | Pedidos & órdenes | `orders`, `order_items`, `order_status_history` | `purchaseservice/*` (order) |
@@ -294,14 +294,14 @@ src/main/java/com/uade/tpo/demo/
 │   ├── UserService.java                    #   interface
 │   ├── UserServiceImpl.java                #   CRUD de usuarios, /me
 │   ├── CategoryService.java                #   CRUD de categorías
-│   ├── CustomersInfoService.java           #   perfil del cliente logueado
+│   ├── CustomerInfoService.java            #   perfil del cliente logueado
 │   └── AddressService.java                 #   CRUD de direcciones del cliente
 │   (+ PersonService, StoreService — legacy muerto)
 │
 ├── controllers/                            # Controllers sueltos
 │   ├── UserController.java                 #   /api/users/{me, id}  (privado)
-│   ├── CategoriesController.java           #   /api/v1/categories/**
-│   ├── CustomersInfoController.java        #   /api/v1/customers/{me, id}
+│   ├── CategoryController.java             #   /api/v1/categories/**
+│   ├── CustomerInfoController.java         #   /api/v1/customers/{me, id}
 │   └── AddressController.java              #   /api/v1/addresses/**
 │   (+ PersonController, StoreController — legacy muerto)
 │

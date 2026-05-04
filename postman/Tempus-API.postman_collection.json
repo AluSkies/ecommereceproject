@@ -31,7 +31,7 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"newuser{{$timestamp}}\",\n  \"email\": \"newuser{{$timestamp}}@tempus.local\",\n  \"password\": \"test1234\",\n  \"name\": \"Nuevo\",\n  \"lastName\": \"Usuario\"\n}"
+              "raw": "{\n  \"email\": \"newuser{{$timestamp}}@tempus.local\",\n  \"password\": \"test1234\",\n  \"firstName\": \"Nuevo\",\n  \"lastName\": \"Usuario\",\n  \"phone\": \"+541100000000\",\n  \"line1\": \"Av. Siempre Viva 742\",\n  \"line2\": \"Depto A\",\n  \"city\": \"CABA\",\n  \"region\": \"BA\",\n  \"postalCode\": \"C1000\",\n  \"countryCode\": \"AR\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] }
           },
@@ -468,7 +468,7 @@
           }
         },
         {
-          "name": "Get cart SIN token — espera 403",
+          "name": "Get cart SIN token — espera 401",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -479,7 +479,7 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": [ "pm.test('403 FORBIDDEN', function () { pm.response.to.have.status(403); });" ]
+                "exec": [ "pm.test('401 UNAUTHORIZED', function () { pm.response.to.have.status(401); });" ]
               }
             }
           ]
@@ -581,7 +581,7 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"PROMO{{$timestamp}}\",\n  \"description\": \"Descuento de prueba creado en Postman\",\n  \"discountPercentage\": 15.00,\n  \"validFromDate\": \"2026-04-01T00:00:00\",\n  \"validUntilDate\": \"2026-12-31T23:59:59\",\n  \"maxUsageCount\": 100\n}"
+              "raw": "{\n  \"code\": \"PROMO{{$timestamp}}\",\n  \"description\": \"Descuento de prueba creado en Postman\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 15.00,\n  \"minPurchase\": 1000.00,\n  \"maxUses\": 100,\n  \"validFrom\": \"2026-04-01T00:00:00\",\n  \"validUntil\": \"2026-12-31T23:59:59\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/discounts", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts"] }
           },
@@ -656,7 +656,7 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"BIENVENIDA10\",\n  \"description\": \"Descuento de bienvenida actualizado\",\n  \"discountPercentage\": 12.00,\n  \"validFromDate\": \"2026-03-01T00:00:00\",\n  \"validUntilDate\": \"2026-12-31T23:59:59\",\n  \"maxUsageCount\": 200\n}"
+              "raw": "{\n  \"code\": \"BIENVENIDA10\",\n  \"description\": \"Descuento de bienvenida actualizado\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 12.00,\n  \"minPurchase\": 1000.00,\n  \"maxUses\": 200,\n  \"validFrom\": \"2026-03-01T00:00:00\",\n  \"validUntil\": \"2026-12-31T23:59:59\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/discounts/{{discountId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","{{discountId}}"] }
           }
@@ -709,16 +709,16 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Juan Carlos\",\n  \"lastName\": \"Pérez Actualizado\"\n}"
+              "raw": "{\n  \"firstName\": \"Juan Carlos\",\n  \"lastName\": \"Pérez Actualizado\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
           }
         },
         {
-          "name": "Delete user",
+          "name": "Disable user",
           "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/disable", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","disable"] }
           }
         }
       ]

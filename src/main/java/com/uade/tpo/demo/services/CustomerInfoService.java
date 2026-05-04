@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CustomersInfoService {
+public class CustomerInfoService {
 
     private final CustomersInfoRepository customersInfoRepository;
     private final AddressesOthersRepository addressesOthersRepository;

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.uade.tpo.demo.entity.dto.CustomerRequest;
 import com.uade.tpo.demo.entity.dto.CustomerResponse;
-import com.uade.tpo.demo.services.CustomersInfoService;
+import com.uade.tpo.demo.services.CustomerInfoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,24 +20,24 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-public class CustomersInfoController {
+public class CustomerInfoController {
 
-    private final CustomersInfoService customersInfoService;
+    private final CustomerInfoService customerInfoService;
 
     @GetMapping("/me")
     public ResponseEntity<CustomerResponse> getMyCustomerInfo() {
-        return ResponseEntity.ok(customersInfoService.getMyCustomerInfo());
+        return ResponseEntity.ok(customerInfoService.getMyCustomerInfo());
     }
 
     @PutMapping("/me")
     public ResponseEntity<CustomerResponse> updateMyCustomerInfo(@RequestBody @Valid CustomerRequest req) {
-        return ResponseEntity.ok(customersInfoService.updateMyCustomerInfo(req));
+        return ResponseEntity.ok(customerInfoService.updateMyCustomerInfo(req));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CustomerResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(customersInfoService.getById(id));
+        return ResponseEntity.ok(customerInfoService.getById(id));
     }
 }
 

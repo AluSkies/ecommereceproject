@@ -1,20 +1,22 @@
 package com.uade.tpo.demo.services;
 
-import com.uade.tpo.demo.domain.DiscountStatus;
-import com.uade.tpo.demo.domain.DiscountType;
-import com.uade.tpo.demo.entity.dto.DiscountRequest;
-import com.uade.tpo.demo.entity.dto.DiscountResponse;
-import com.uade.tpo.demo.entity.Discount;
-import com.uade.tpo.demo.repository.DiscountRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.uade.tpo.demo.domain.DiscountStatus;
+import com.uade.tpo.demo.domain.DiscountType;
+import com.uade.tpo.demo.entity.Discount;
+import com.uade.tpo.demo.entity.dto.DiscountRequest;
+import com.uade.tpo.demo.entity.dto.DiscountResponse;
+import com.uade.tpo.demo.repository.DiscountRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Business logic service for discount management backed by JPA persistence.
