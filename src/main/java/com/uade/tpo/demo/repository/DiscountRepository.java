@@ -18,7 +18,7 @@ public interface DiscountRepository extends JpaRepository<Discount, Integer> {
 
     List<Discount> findByStatus(DiscountStatus status);
 
-    @Query("SELECT d FROM Discount d WHERE d.status = com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus.ACTIVE "
+    @Query("SELECT d FROM Discount d WHERE d.status = com.uade.tpo.demo.domain.DiscountStatus.ACTIVE "
         + "AND d.validFrom <= :now AND d.validUntil >= :now")
     List<Discount> findActiveAndValid(@Param("now") LocalDateTime now);
 
