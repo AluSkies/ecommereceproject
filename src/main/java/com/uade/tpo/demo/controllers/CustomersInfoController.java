@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.uade.tpo.demo.entity.dto.CustomerRequest;
 import com.uade.tpo.demo.entity.dto.CustomerResponse;
-import com.uade.tpo.demo.service.CustomersInfoService;
+import com.uade.tpo.demo.services.CustomersInfoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,3 +40,4 @@ public class CustomersInfoController {
         return ResponseEntity.ok(customersInfoService.getById(id));
     }
 }
+

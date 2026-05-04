@@ -1,7 +1,7 @@
 package com.uade.tpo.demo.repository;
 
-import com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus;
-import com.uade.tpo.demo.catalogservice.discount.entity.Discount;
+import com.uade.tpo.demo.domain.DiscountStatus;
+import com.uade.tpo.demo.entity.Discount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,3 +30,5 @@ public interface DiscountRepository extends JpaRepository<Discount, Integer> {
 
     boolean existsByCode(String code);
 }
+
+

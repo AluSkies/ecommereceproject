@@ -1,7 +1,7 @@
 package com.uade.tpo.demo.controllers;
 
 import com.uade.tpo.demo.entity.Person;
-import com.uade.tpo.demo.service.PersonService;
+import com.uade.tpo.demo.services.PersonService;
 
 import java.util.ArrayList;
 
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/people")
 
 public class PersonController {
-    private PersonService personService = new com.uade.tpo.demo.service.PersonService();
+    private PersonService personService = new com.uade.tpo.demo.services.PersonService();
 
     @GetMapping("/list")
     public ArrayList<Person> getPeople() {
@@ -21,3 +21,4 @@ public class PersonController {
     }
 
 }
+

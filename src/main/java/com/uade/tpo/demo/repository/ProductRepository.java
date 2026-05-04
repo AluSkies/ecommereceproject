@@ -1,7 +1,7 @@
 package com.uade.tpo.demo.repository;
 
-import com.uade.tpo.demo.catalogservice.domain.ProductStatus;
-import com.uade.tpo.demo.catalogservice.entity.Product;
+import com.uade.tpo.demo.domain.ProductStatus;
+import com.uade.tpo.demo.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,3 +35,4 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     boolean existsBySku(String sku);
 }
+

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uade.tpo.demo.entity.Category;
 import com.uade.tpo.demo.entity.dto.CategoryRequest;
 import com.uade.tpo.demo.exceptions.CategoryDuplicateException;
-import com.uade.tpo.demo.service.CategoryService;
+import com.uade.tpo.demo.services.CategoryService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -64,3 +64,5 @@ public class CategoriesController {
         return ResponseEntity.noContent().build();
     }
 }
+
+

@@ -725,20 +725,20 @@
     },
     {
       "name": "Categories",
-      "description": "Categorías (montado en /categories, no /api/v1/).",
+      "description": "Categorías en /api/v1/categories.",
       "item": [
         {
           "name": "List categories",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+            "url": { "raw": "{{baseUrl}}/api/v1/categories", "host": ["{{baseUrl}}"], "path": ["api","v1","categories"] }
           }
         },
         {
           "name": "Get category by id",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/categories/1", "host": ["{{baseUrl}}"], "path": ["categories","1"] }
+            "url": { "raw": "{{baseUrl}}/api/v1/categories/1", "host": ["{{baseUrl}}"], "path": ["api","v1","categories","1"] }
           }
         },
         {
@@ -750,7 +750,7 @@
               "mode": "raw",
               "raw": "{\n  \"id\": 99,\n  \"description\": \"Categoría de prueba\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+            "url": { "raw": "{{baseUrl}}/api/v1/categories", "host": ["{{baseUrl}}"], "path": ["api","v1","categories"] }
           }
         }
       ]
