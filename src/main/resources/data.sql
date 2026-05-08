@@ -140,8 +140,8 @@ INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, qua
 -- ============================================================================
 INSERT INTO order_status_history (id, order_id, previous_status, new_status, changed_by, changed_at, note) VALUES
     (1, 1, NULL,      'PENDING',   2, '2026-01-15 10:30:00', 'Orden creada por el cliente.'),
-    (2, 1, 'PENDING', 'PAID',      1, '2026-01-15 11:05:00', 'Pago confirmado por pasarela.'),
-    (3, 1, 'PAID',    'DELIVERED', 1, '2026-01-18 16:45:00', 'Entregado en domicilio - firma del receptor.');
+    (2, 1, 'PENDING',   'CONFIRMED', 1, '2026-01-15 11:05:00', 'Pago confirmado por pasarela.'),
+    (3, 1, 'CONFIRMED', 'DELIVERED', 1, '2026-01-18 16:45:00', 'Entregado en domicilio - firma del receptor.');
 
 -- ============================================================================
 -- 10) carts / cart_items  -> intentionally empty (carts are transient).
