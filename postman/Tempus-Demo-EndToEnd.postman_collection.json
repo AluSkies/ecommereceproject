@@ -100,7 +100,7 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"buyer1\",\n  \"password\": \"buyer123\"\n}"
+              "raw": "{\n  \"username\": \"buyer1@tempus.local\",\n  \"password\": \"buyer123\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
           },
