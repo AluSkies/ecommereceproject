@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout'
 import { Home } from '@/pages/Home'
 import { Catalog } from '@/pages/Catalog'
 import { ProductDetail } from '@/pages/ProductDetail'
+import { Cart } from '@/pages/Cart'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="catalogo" element={<Catalog />} />
           <Route path="producto/:id" element={<ProductDetail />} />
+          <Route path="carrito" element={<Cart />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
