@@ -89,7 +89,7 @@ public class DiscountService {
      */
     @Transactional(readOnly = true)
     public List<DiscountResponse> getActiveAndValidDiscounts() {
-        return discountRepository.findActiveAndValid(LocalDateTime.now()).stream()
+        return discountRepository.findActiveAndValid(LocalDateTime.now(), DiscountStatus.ACTIVE).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
