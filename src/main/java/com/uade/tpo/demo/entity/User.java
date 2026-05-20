@@ -20,7 +20,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -79,7 +78,7 @@ public class User implements UserDetails {
     @Builder.Default
     private Date updatedAt = new Date();
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Transient
     private CustomerInfo customerInfo;
 
     @OneToMany(mappedBy = "adminUser", fetch = FetchType.LAZY)
@@ -112,7 +111,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return Boolean.TRUE.equals(isActive);
+        return isActive == null || Boolean.TRUE.equals(isActive);
     }
 
     @Override

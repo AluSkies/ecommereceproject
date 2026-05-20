@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.uade.tpo.demo.entity.dto.AddressRequest;
 import com.uade.tpo.demo.entity.dto.AddressResponse;
-import com.uade.tpo.demo.service.AddressService;
+import com.uade.tpo.demo.services.AddressService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

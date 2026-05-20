@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.uade.tpo.demo.entity.Store;
-import com.uade.tpo.demo.service.StoreService;
-  
+import com.uade.tpo.demo.services.StoreService;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -21,7 +21,7 @@ import lombok.Data;
 public class StoreController {
     private final StoreService storeService = new StoreService();
 
-    @GetMapping("/info") 
+    @GetMapping("/info")
     public Store getStoreInfo() {
         return storeService.getStoreInfo();
     }

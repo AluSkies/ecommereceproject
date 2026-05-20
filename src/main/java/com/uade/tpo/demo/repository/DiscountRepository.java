@@ -1,7 +1,7 @@
 package com.uade.tpo.demo.repository;
 
-import com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus;
-import com.uade.tpo.demo.catalogservice.discount.entity.Discount;
+import com.uade.tpo.demo.domain.DiscountStatus;
+import com.uade.tpo.demo.entity.Discount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,9 +18,9 @@ public interface DiscountRepository extends JpaRepository<Discount, Integer> {
 
     List<Discount> findByStatus(DiscountStatus status);
 
-    @Query("SELECT d FROM Discount d WHERE d.status = com.uade.tpo.demo.catalogservice.discount.domain.DiscountStatus.ACTIVE "
+    @Query("SELECT d FROM Discount d WHERE d.status = :status "
         + "AND d.validFrom <= :now AND d.validUntil >= :now")
-    List<Discount> findActiveAndValid(@Param("now") LocalDateTime now);
+    List<Discount> findActiveAndValid(@Param("now") LocalDateTime now, @Param("status") DiscountStatus status);
 
     @Query("SELECT d FROM Discount d WHERE d.validUntil < :now")
     List<Discount> findExpired(@Param("now") LocalDateTime now);

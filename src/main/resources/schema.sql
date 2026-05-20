@@ -281,13 +281,13 @@ CREATE TABLE cart_items (
 -- ============================================================================
 
 -- orders ---------------------------------------------------------------------
--- status valid values: PENDING | PAID | FULFILLING | SHIPPED | DELIVERED |
+-- status valid values: PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED |
 --                      CANCELLED | REFUNDED
 CREATE TABLE orders (
     id                BIGINT         NOT NULL AUTO_INCREMENT,
     order_number      VARCHAR(40)    NOT NULL,
     user_id           BIGINT         NOT NULL,
-    status            VARCHAR(30)    NOT NULL COMMENT 'PENDING|PAID|FULFILLING|SHIPPED|DELIVERED|CANCELLED|REFUNDED',
+    status            VARCHAR(30)    NOT NULL COMMENT 'PENDING|CONFIRMED|PROCESSING|SHIPPED|DELIVERED|CANCELLED|REFUNDED',
     subtotal          DECIMAL(12,2)  NOT NULL,
     discount_total    DECIMAL(12,2)  NOT NULL DEFAULT 0.00,
     shipping_total    DECIMAL(12,2)  NOT NULL DEFAULT 0.00,
