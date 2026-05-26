@@ -29,7 +29,9 @@ UPDATE customers_info SET preferred_shipping_address_id = NULL;
 DELETE FROM addresses_others;
 DELETE FROM customers_info;
 DELETE FROM sesion_audit_log;
-DELETE FROM admin_audit_logs;
+-- TODO: table admin_audit_logs is mapped by AdminAuditLog.java but missing from schema.sql.
+-- Commented out so backend can boot. Re-enable once the CREATE TABLE is added to schema.sql.
+-- DELETE FROM admin_audit_logs;
 DELETE FROM users;
 
 SET FOREIGN_KEY_CHECKS = 1;
