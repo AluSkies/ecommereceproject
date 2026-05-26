@@ -9,6 +9,46 @@ import { Divider } from '@/components/ui/Divider'
 import { PriceTag } from '@/components/ui/PriceTag'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
+function parseShippingSnapshot(snapshot) {
+  if (!snapshot) return null
+  if (typeof snapshot === 'object') return snapshot
+  try {
+    const parsed = JSON.parse(snapshot)
+    return typeof parsed === 'object' && parsed !== null ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function ShippingDetails({ snapshot }) {
+  const data = parseShippingSnapshot(snapshot)
+
+  if (!data) {
+    return (
+      <p className="text-sm text-ink-secondary whitespace-pre-line">{snapshot}</p>
+    )
+  }
+
+  const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim()
+  const cityLine = [data.city, data.region, data.postalCode].filter(Boolean).join(', ')
+
+  return (
+    <address className="not-italic text-sm text-ink-secondary flex flex-col gap-0.5">
+      {fullName ? <span className="text-ink-primary">{fullName}</span> : null}
+      {data.line1 ? <span>{data.line1}</span> : null}
+      {data.line2 ? <span>{data.line2}</span> : null}
+      {cityLine ? <span>{cityLine}</span> : null}
+      {data.countryCode ? <span>{data.countryCode}</span> : null}
+      {data.phone ? (
+        <span className="text-ink-muted">
+          <span className="text-xs tracking-widest uppercase mr-2">Tel</span>
+          {data.phone}
+        </span>
+      ) : null}
+    </address>
+  )
+}
+
 export function OrderConfirmation() {
   const { id } = useParams()
   const location = useLocation()
@@ -119,9 +159,7 @@ export function OrderConfirmation() {
           {order.shippingSnapshot ? (
             <div className="border-t border-ash pt-6">
               <p className="text-xs tracking-[0.3em] uppercase text-gold mb-2">Envío</p>
-              <p className="text-sm text-ink-secondary whitespace-pre-line">
-                {order.shippingSnapshot}
-              </p>
+              <ShippingDetails snapshot={order.shippingSnapshot} />
             </div>
           ) : null}
 
