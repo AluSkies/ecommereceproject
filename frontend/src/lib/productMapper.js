@@ -36,6 +36,7 @@ export function mapProduct(p, categoriesByCode) {
     price: typeof p.price === 'string' ? Number(p.price) : p.price,
     categoryCode: code,
     categoryName,
+    stock: p.stock ?? 0,
     image: pickImage(p.images),
     description: p.description ?? '',
     specs: {

@@ -13,7 +13,7 @@ function useCatalog() {
     const controller = new AbortController()
     Promise.all([
       apiGet('/categories', controller.signal),
-      apiGet('/products/available', controller.signal),
+      apiGet('/products/active', controller.signal),
     ])
       .then(([categories, products]) => {
         const byCode = new Map(categories.map((c) => [c.code, c]))

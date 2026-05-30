@@ -1,13 +1,16 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useCategories, useWatches } from '@/hooks/useWatches'
 import { WatchGrid } from '@/components/watch/WatchGrid'
 import { CategoryFilter } from '@/components/catalog/CategoryFilter'
 import { PriceRangeFilter } from '@/components/catalog/PriceRangeFilter'
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth'
+import { Button } from '@/components/ui/Button'
 
 export function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: categories } = useCategories()
+  const { isAdmin } = useAuth()
 
   const rawParam = searchParams.get('categoria')
   const selectedCode = rawParam && categories.some((c) => c.code === rawParam)
@@ -56,11 +59,18 @@ export function Catalog() {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       {/* Header */}
-      <div className="mb-10">
-        <p className="text-xs tracking-widest uppercase text-gold mb-2">Tienda</p>
-        <h1 className="font-display text-4xl md:text-5xl font-medium text-ink-primary">
-          {headingLabel}
-        </h1>
+      <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="text-xs tracking-widest uppercase text-gold mb-2">Tienda</p>
+          <h1 className="font-display text-4xl md:text-5xl font-medium text-ink-primary">
+            {headingLabel}
+          </h1>
+        </div>
+        {isAdmin ? (
+          <Button as={Link} to="/admin/productos/nuevo" variant="primary" size="md">
+            + Agregar Nuevo Producto
+          </Button>
+        ) : null}
       </div>
 
       {/* Filters */}

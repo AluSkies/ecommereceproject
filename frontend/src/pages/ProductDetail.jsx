@@ -16,7 +16,7 @@ export function ProductDetail() {
   const numericId = id ? Number(id) : undefined
   const { data: watch, loading, error } = useWatchById(numericId)
   const { data: allWatches } = useAllWatches()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isAdmin } = useAuth()
   const { addItem } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +36,8 @@ export function ProductDetail() {
   if (error || !watch) {
     return <Navigate to="/catalogo" replace />
   }
+
+  const isOutOfStock = watch.stock <= 0
 
   const related = allWatches
     .filter((w) => w.categoryCode === watch.categoryCode && w.id !== watch.id)
@@ -111,7 +113,12 @@ export function ProductDetail() {
                 type="button"
                 aria-label="Disminuir cantidad"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+<<<<<<< HEAD
                 className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer"
+=======
+                disabled={isOutOfStock}
+                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
+>>>>>>> 2e9cbcd (Panel Admin)
               >
                 −
               </button>
@@ -119,8 +126,14 @@ export function ProductDetail() {
               <button
                 type="button"
                 aria-label="Aumentar cantidad"
+<<<<<<< HEAD
                 onClick={() => setQuantity((q) => q + 1)}
                 className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer"
+=======
+                onClick={() => setQuantity((q) => Math.min(watch.stock, q + 1))}
+                disabled={isOutOfStock || quantity >= watch.stock}
+                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
+>>>>>>> 2e9cbcd (Panel Admin)
               >
                 +
               </button>
@@ -131,6 +144,7 @@ export function ProductDetail() {
               variant="primary"
               size="lg"
               onClick={handleAdd}
+<<<<<<< HEAD
               disabled={adding}
               className={`w-full sm:flex-1 ${adding ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
@@ -138,6 +152,27 @@ export function ProductDetail() {
             </Button>
           </div>
 
+=======
+              disabled={adding || isOutOfStock}
+              className={`w-full sm:flex-1 ${(adding || isOutOfStock) ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              {isOutOfStock ? 'Sin stock' : adding ? 'Agregando…' : 'Agregar al carrito'}
+            </Button>
+          </div>
+
+          {/* Controles exclusivos de Administrador */}
+          {isAdmin ? (
+            <Button
+              as={Link}
+              to={`/admin/productos/editar/${watch.id}`}
+              variant="ghost"
+              className="w-full sm:w-auto mt-2 border border-ash hover:border-gold transition-colors"
+            >
+              Editar Producto
+            </Button>
+          ) : null}
+
+>>>>>>> 2e9cbcd (Panel Admin)
           {feedback ? (
             <p
               role={feedback.kind === 'err' ? 'alert' : 'status'}

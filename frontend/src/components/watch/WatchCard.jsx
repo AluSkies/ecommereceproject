@@ -3,18 +3,27 @@ import { Badge } from '@/components/ui/Badge'
 import { PriceTag } from '@/components/ui/PriceTag'
 
 export function WatchCard({ watch }) {
+  const isOutOfStock = watch.stock <= 0
+
   return (
     <Link
       to={`/producto/${watch.id}`}
-      className="group flex flex-col bg-surface-card shadow-card hover:shadow-card-hover transition-all duration-300 ease-luxury"
+      className="group flex flex-col bg-surface-card shadow-card hover:shadow-card-hover transition-all duration-300 ease-luxury relative"
     >
       {/* Image */}
-      <div className="aspect-watch overflow-hidden bg-smoke">
+      <div className="aspect-watch overflow-hidden bg-smoke relative">
         <img
           src={watch.image}
           alt={`${watch.brand} ${watch.name}`}
-          className="w-full h-full object-cover transition-transform duration-500 ease-luxury group-hover:scale-105"
+          className={`w-full h-full object-cover transition-transform duration-500 ease-luxury group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
         />
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="bg-obsidian/80 text-gold text-xs tracking-widest uppercase px-4 py-2 backdrop-blur-sm">
+              Sin Stock
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Body */}

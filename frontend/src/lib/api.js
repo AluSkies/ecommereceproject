@@ -113,6 +113,16 @@ export function apiPut(path, body, signal) {
 
 /**
  * @param {string} path
+ * @param {unknown} body
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<any>}
+ */
+export function apiPatch(path, body, signal) {
+  return requestWithBody('PATCH', path, body, signal)
+}
+
+/**
+ * @param {string} path
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */

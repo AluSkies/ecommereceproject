@@ -6,7 +6,7 @@ import { useCart } from '@/lib/cart'
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const drawerRef = useRef(null)
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, logout } = useAuth()
   const { itemCount } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
@@ -100,6 +100,30 @@ export function Navbar() {
             </NavLink>
           ) : null}
 
+          {isAdmin ? (
+            <>
+              <NavLink
+                to="/admin/cupones"
+                className={({ isActive }) =>
+                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                  }`
+                }
+              >
+                Cupones
+              </NavLink>
+              <NavLink
+                to="/admin/ordenes"
+                className={({ isActive }) =>
+                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                  }`
+                }
+              >
+                Ventas
+              </NavLink>
+            </>
+          ) : null}
           <div className="flex items-center gap-3 pl-4 border-l border-ash">
             {CartBadge}
             {isAuthenticated ? (
@@ -195,6 +219,31 @@ export function Navbar() {
               >
                 Mis órdenes
               </NavLink>
+<<<<<<< HEAD
+=======
+              {isAdmin ? (
+                <>
+                  <NavLink
+                    to="/admin/cupones"
+                    onClick={() => setMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+                    }
+                  >
+                    Cupones
+                  </NavLink>
+                  <NavLink
+                    to="/admin/ordenes"
+                    onClick={() => setMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+                    }
+                  >
+                    Ventas
+                  </NavLink>
+                </>
+              ) : null}
+>>>>>>> 2e9cbcd (Panel Admin)
               <span className="text-xs tracking-widest uppercase text-ink-muted">
                 Hola, <span className="text-ink-primary">{displayName}</span>
               </span>
