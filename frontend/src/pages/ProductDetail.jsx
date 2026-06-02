@@ -153,6 +153,7 @@ export function ProductDetail() {
               Editar Producto
             </Button>
           ) : null}
+
           {feedback ? (
             <p
               role={feedback.kind === 'err' ? 'alert' : 'status'}

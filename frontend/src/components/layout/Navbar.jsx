@@ -124,6 +124,7 @@ export function Navbar() {
               </NavLink>
             </>
           ) : null}
+
           <div className="flex items-center gap-3 pl-4 border-l border-ash">
             {CartBadge}
             {isAuthenticated ? (
