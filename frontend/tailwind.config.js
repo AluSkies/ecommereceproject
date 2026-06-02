@@ -40,6 +40,15 @@ export default {
       aspectRatio: {
         watch: '3 / 4',
       },
+      keyframes: {
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+      },
     },
   },
   plugins: [],

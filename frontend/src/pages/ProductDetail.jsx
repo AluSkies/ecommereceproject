@@ -86,7 +86,7 @@ export function ProductDetail() {
       {/* Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
         {/* Gallery */}
-        <WatchImageGallery images={[watch.image]} alt={`${watch.brand} ${watch.name}`} />
+        <WatchImageGallery images={[watch.image].filter(Boolean)} alt={`${watch.brand} ${watch.name}`} />
 
         {/* Info */}
         <div className="flex flex-col gap-6">
@@ -108,23 +108,23 @@ export function ProductDetail() {
 
           {/* Quantity + add to cart */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center border border-ash bg-pearl">
+            <div className="flex items-center border border-ash bg-pearl select-none rounded-full overflow-hidden">
               <button
                 type="button"
                 aria-label="Disminuir cantidad"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={isOutOfStock}
-                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
+                className="px-4 py-3 text-lg leading-none text-ink-muted hover:text-gold hover:bg-smoke active:scale-95 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 −
               </button>
-              <span className="px-4 text-sm text-ink-primary w-10 text-center">{quantity}</span>
+              <span className="px-4 text-sm text-ink-primary w-10 text-center tabular-nums">{quantity}</span>
               <button
                 type="button"
                 aria-label="Aumentar cantidad"
                 onClick={() => setQuantity((q) => Math.min(watch.stock, q + 1))}
                 disabled={isOutOfStock || quantity >= watch.stock}
-                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
+                className="px-4 py-3 text-lg leading-none text-ink-muted hover:text-gold hover:bg-smoke active:scale-95 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 +
               </button>
@@ -135,8 +135,9 @@ export function ProductDetail() {
               variant="primary"
               size="lg"
               onClick={handleAdd}
-              disabled={adding || isOutOfStock}
-              className={`w-full sm:flex-1 ${(adding || isOutOfStock) ? 'opacity-60 cursor-not-allowed' : ''}`}
+              loading={adding}
+              disabled={isOutOfStock}
+              className="w-full sm:flex-1"
             >
               {isOutOfStock ? 'Sin stock' : adding ? 'Agregando…' : 'Agregar al carrito'}
             </Button>

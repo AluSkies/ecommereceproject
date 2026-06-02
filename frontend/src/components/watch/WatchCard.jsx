@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
 import { PriceTag } from '@/components/ui/PriceTag'
+import { SmartImage } from '@/components/ui/SmartImage'
 
 export function WatchCard({ watch }) {
   const isOutOfStock = watch.stock <= 0
@@ -8,11 +9,11 @@ export function WatchCard({ watch }) {
   return (
     <Link
       to={`/producto/${watch.id}`}
-      className="group flex flex-col bg-surface-card shadow-card hover:shadow-card-hover transition-all duration-300 ease-luxury relative"
+      className="group flex flex-col bg-surface-card border border-transparent shadow-card hover:shadow-card-hover hover:border-gold/30 hover:-translate-y-1 transition-all duration-300 ease-luxury relative"
     >
       {/* Image */}
       <div className="aspect-watch overflow-hidden bg-smoke relative">
-        <img
+        <SmartImage
           src={watch.image}
           alt={`${watch.brand} ${watch.name}`}
           className={`w-full h-full object-cover transition-transform duration-500 ease-luxury group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}

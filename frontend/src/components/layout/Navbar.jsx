@@ -5,11 +5,19 @@ import { useCart } from '@/lib/cart'
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const drawerRef = useRef(null)
   const { user, isAuthenticated, isAdmin, logout } = useAuth()
   const { itemCount } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -55,7 +63,14 @@ export function Navbar() {
   )
 
   return (
-    <header ref={drawerRef} className="fixed top-0 left-0 right-0 z-50 bg-pearl border-b border-ash">
+    <header
+      ref={drawerRef}
+      className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ease-luxury ${
+        scrolled || menuOpen
+          ? 'bg-pearl/80 backdrop-blur-md border-ash shadow-card'
+          : 'bg-pearl border-transparent'
+      }`}
+    >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link
           to="/"
@@ -64,12 +79,12 @@ export function Navbar() {
           Tempus
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-5 lg:gap-7">
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
-              `text-sm tracking-widest uppercase transition-colors duration-300 ${
+              `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                 isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
               }`
             }
@@ -79,7 +94,7 @@ export function Navbar() {
           <NavLink
             to="/catalogo"
             className={({ isActive }) =>
-              `text-sm tracking-widest uppercase transition-colors duration-300 ${
+              `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                 isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
               }`
             }
@@ -92,7 +107,7 @@ export function Navbar() {
               <NavLink
                 to="/mis-ordenes"
                 className={({ isActive }) =>
-                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                  `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                     isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
                   }`
                 }
@@ -102,7 +117,7 @@ export function Navbar() {
               <NavLink
                 to="/perfil"
                 className={({ isActive }) =>
-                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                  `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                     isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
                   }`
                 }
@@ -125,7 +140,7 @@ export function Navbar() {
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
-                    `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                    `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                       isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
                     }`
                   }
@@ -136,17 +151,17 @@ export function Navbar() {
             </>
           ) : null}
 
-          <div className="flex items-center gap-3 pl-4 border-l border-ash">
+          <div className="flex items-center gap-4 pl-4 border-l border-ash">
             {CartBadge}
             {isAuthenticated ? (
               <>
-                <span className="text-xs tracking-widest uppercase text-ink-muted">
+                <span className="text-xs tracking-wide uppercase whitespace-nowrap text-ink-muted">
                   Hola, <span className="text-ink-primary">{displayName}</span>
                 </span>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="text-sm tracking-widest uppercase text-ink-muted hover:text-gold transition-colors duration-300 cursor-pointer"
+                  className="text-sm tracking-wide uppercase whitespace-nowrap text-ink-muted hover:text-gold transition-colors duration-300 cursor-pointer"
                 >
                   Salir
                 </button>
@@ -156,7 +171,7 @@ export function Navbar() {
                 to="/login"
                 state={{ from: location }}
                 className={({ isActive }) =>
-                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                  `text-sm tracking-wide uppercase whitespace-nowrap transition-colors duration-300 ${
                     isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
                   }`
                 }
