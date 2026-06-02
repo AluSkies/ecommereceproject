@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { useCart, toNumber } from '@/lib/cart'
-import { apiPost, ApiError } from '@/lib/api'
+import { apiPost, apiGetNullable, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { PriceTag } from '@/components/ui/PriceTag'
@@ -76,6 +76,12 @@ export function Checkout() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
+  // Cupón de descuento (GET /discounts/code/{code})
+  const [discountCode, setDiscountCode] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
+  const [discountError, setDiscountError] = useState(null)
+  const [validatingDiscount, setValidatingDiscount] = useState(false)
+
   useEffect(() => {
     if (!receipt) {
       setReceiptPreview(null)
@@ -94,11 +100,15 @@ export function Checkout() {
 
   const totals = useMemo(() => {
     const subtotal = toNumber(cart?.subtotal)
-    const taxTotal = Math.round(subtotal * 0.21 * 100) / 100
+    const discountTotal = appliedDiscount
+      ? Math.round(subtotal * (toNumber(appliedDiscount.discountValue) / 100) * 100) / 100
+      : 0
+    const taxableBase = Math.max(subtotal - discountTotal, 0)
+    const taxTotal = Math.round(taxableBase * 0.21 * 100) / 100
     const shippingTotal = subtotal > 0 ? 15000 : 0
-    const grandTotal = Math.round((subtotal + taxTotal + shippingTotal) * 100) / 100
-    return { subtotal, taxTotal, shippingTotal, grandTotal }
-  }, [cart])
+    const grandTotal = Math.round((taxableBase + taxTotal + shippingTotal) * 100) / 100
+    return { subtotal, discountTotal, taxTotal, shippingTotal, grandTotal }
+  }, [cart, appliedDiscount])
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />
@@ -122,6 +132,49 @@ export function Checkout() {
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleApplyDiscount = async () => {
+    const code = discountCode.trim().toUpperCase()
+    setDiscountError(null)
+    if (!code) {
+      setAppliedDiscount(null)
+      return
+    }
+    setValidatingDiscount(true)
+    try {
+      // GET /discounts/code/{code} — devuelve null (404) si no existe.
+      const discount = await apiGetNullable(`/discounts/code/${encodeURIComponent(code)}`)
+      if (!discount) {
+        setAppliedDiscount(null)
+        setDiscountError('El código no existe o no es válido.')
+        return
+      }
+      const isActive = discount.status === 'ACTIVE' || discount.active
+      if (!isActive) {
+        setAppliedDiscount(null)
+        setDiscountError('El cupón no está activo.')
+        return
+      }
+      const minPurchase = toNumber(discount.minPurchase)
+      if (minPurchase > 0 && toNumber(cart?.subtotal) < minPurchase) {
+        setAppliedDiscount(null)
+        setDiscountError(`Requiere una compra mínima de $${minPurchase.toLocaleString('es-AR')}.`)
+        return
+      }
+      setAppliedDiscount(discount)
+    } catch (err) {
+      setAppliedDiscount(null)
+      setDiscountError(err instanceof ApiError ? err.message : 'No se pudo validar el cupón.')
+    } finally {
+      setValidatingDiscount(false)
+    }
+  }
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null)
+    setDiscountCode('')
+    setDiscountError(null)
   }
 
   const handleReceiptChange = (file) => {
@@ -173,6 +226,7 @@ export function Checkout() {
     const payload = {
       cartId: cart.id,
       customerId: user.id,
+      ...(appliedDiscount ? { discountCode: appliedDiscount.code } : {}),
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       phone: form.phone.trim(),
@@ -346,11 +400,59 @@ export function Checkout() {
             ))}
           </ul>
 
+          {/* Cupón de descuento */}
+          <div className="border-t border-ash pt-4 flex flex-col gap-2">
+            <label htmlFor="discountCode" className="text-xs tracking-widest uppercase text-ink-muted">
+              Código de descuento
+            </label>
+            {appliedDiscount ? (
+              <div className="flex items-center justify-between gap-2 border border-gold bg-gold/10 px-3 py-2">
+                <span className="text-sm text-ink-primary">
+                  <span className="font-bold">{appliedDiscount.code}</span> — {toNumber(appliedDiscount.discountValue)}% OFF
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveDiscount}
+                  className="text-xs tracking-widest uppercase text-ink-muted hover:text-red-600"
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  id="discountCode"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                  placeholder="BIENVENIDA10"
+                  className="flex-1 min-w-0 border border-ash px-3 py-2 text-sm text-ink-primary bg-pearl focus:outline-none focus:border-gold"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyDiscount}
+                  disabled={validatingDiscount}
+                  className="text-xs tracking-widest uppercase text-ink-primary border border-ash px-4 hover:border-gold transition-colors disabled:opacity-50"
+                >
+                  {validatingDiscount ? '…' : 'Aplicar'}
+                </button>
+              </div>
+            )}
+            {discountError && (
+              <p role="alert" className="text-xs tracking-widest uppercase text-red-600">{discountError}</p>
+            )}
+          </div>
+
           <div className="border-t border-ash pt-4 text-sm flex flex-col gap-1">
             <div className="flex justify-between text-ink-muted">
               <span>Subtotal</span>
               <PriceTag amount={totals.subtotal} className="text-sm text-ink-primary" />
             </div>
+            {totals.discountTotal > 0 && (
+              <div className="flex justify-between text-gold">
+                <span>Descuento ({toNumber(appliedDiscount.discountValue)}%)</span>
+                <span className="font-semibold text-sm text-gold">−${totals.discountTotal.toLocaleString('es-AR')}</span>
+              </div>
+            )}
             <div className="flex justify-between text-ink-muted">
               <span>Envío</span>
               <PriceTag amount={totals.shippingTotal} className="text-sm text-ink-primary" />

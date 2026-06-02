@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
+// Cada filtro mapea a un endpoint distinto del DiscountController.
+const FILTERS = [
+  { key: 'all', label: 'Todos', path: '/discounts' },
+  { key: 'valid', label: 'Vigentes', path: '/discounts/active/valid' },
+  { key: 'active', label: 'Activos', path: '/discounts/status/ACTIVE' },
+  { key: 'expired', label: 'Vencidos', path: '/discounts/expired' },
+  { key: 'scheduled', label: 'Programados', path: '/discounts/scheduled' },
+]
+
 export function GestionCupones() {
   const [discounts, setDiscounts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,11 +21,13 @@ export function GestionCupones() {
   const [actionError, setActionError] = useState(null)
   const [confirmToggle, setConfirmToggle] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [filter, setFilter] = useState('all')
 
-  const fetchDiscounts = async () => {
+  const fetchDiscounts = async (filterKey = filter) => {
+    const active = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
     setLoading(true)
     try {
-      const data = await apiGet('/discounts')
+      const data = await apiGet(active.path)
       setDiscounts(data)
       setError(null)
     } catch (err) {
@@ -27,8 +38,9 @@ export function GestionCupones() {
   }
 
   useEffect(() => {
-    fetchDiscounts()
-  }, [])
+    fetchDiscounts(filter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
 
   const executeToggle = async (discount) => {
     setActionError(null)
@@ -76,6 +88,24 @@ export function GestionCupones() {
         <Button as={Link} to="/admin/cupones/nuevo" variant="primary" size="md">
           + Crear Nuevo Cupón
         </Button>
+      </div>
+
+      {/* Filtros — cada uno consume un endpoint distinto del backend */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            className={`text-xs tracking-widest uppercase px-4 py-2 border transition-colors ${
+              filter === f.key
+                ? 'border-gold text-gold bg-gold/10'
+                : 'border-ash text-ink-muted hover:border-gold hover:text-ink-primary'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {actionError && (
@@ -136,6 +166,12 @@ export function GestionCupones() {
                     <option value="false">Pausado / Inactivo</option>
                   </select>
                 </div>
+                <Link
+                  to={`/admin/cupones/editar/${discount.id}`}
+                  className="text-xs tracking-widest uppercase text-ink-muted hover:text-gold transition-colors mt-4"
+                >
+                  Editar
+                </Link>
                 <button
                   onClick={() => setConfirmDelete(discount.id)}
                   className="text-xs tracking-widest uppercase text-ink-muted hover:text-red-600 transition-colors mt-4"

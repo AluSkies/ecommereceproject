@@ -1,40 +1,26 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { apiGet, apiPut, ApiError } from '@/lib/api'
+import { apiGet, apiPut, apiPatch, apiDelete, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
+import { Field } from '@/components/ui/Field'
 
-// Reutilizamos el diseño exacto de los inputs de tu marca
-function Field({ label, name, value, onChange, type = 'text', required = false, placeholder, step }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={name} className="text-xs tracking-widest uppercase text-ink-muted">
-        {label}
-        {required ? <span className="text-gold"> *</span> : null}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        step={step}
-        required={required}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(name, e.target.value)}
-        className="border border-ash px-4 py-3 text-sm text-ink-primary bg-pearl focus:outline-none focus:border-gold transition-colors"
-      />
-    </div>
-  )
-}
+const PRODUCT_STATUSES = ['ACTIVE', 'INACTIVE', 'DISCONTINUED']
 
 export function EditarProducto() {
   const { id } = useParams()
   const navigate = useNavigate()
-  
+
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+
+  const [status, setStatus] = useState('ACTIVE')
+  const [statusSaving, setStatusSaving] = useState(false)
+  const [statusError, setStatusError] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const [form, setForm] = useState({
     sku: '',
@@ -73,6 +59,7 @@ export function EditarProducto() {
           // Extraemos la URL de la primera imagen (como lo armamos en el backend)
           imageUrl: data.images && data.images.length > 0 ? data.images[0].url : '',
         })
+        if (data.status) setStatus(data.status)
       } catch (err) {
         setError('No se pudo cargar el producto para editar.')
       } finally {
@@ -84,6 +71,35 @@ export function EditarProducto() {
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleStatusChange = async (newStatus) => {
+    const previous = status
+    setStatus(newStatus)
+    setStatusError(null)
+    setStatusSaving(true)
+    try {
+      // El backend recibe el nuevo estado como query param (ver colección Postman).
+      await apiPatch(`/products/${id}/status?status=${newStatus}`, {})
+    } catch (err) {
+      setStatus(previous) // revertir si falla
+      setStatusError(err instanceof ApiError ? err.message : 'No se pudo cambiar el estado.')
+    } finally {
+      setStatusSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    setError(null)
+    try {
+      await apiDelete(`/products/${id}`)
+      navigate('/catalogo')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo eliminar el producto.')
+      setDeleting(false)
+      setConfirmDelete(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -129,6 +145,35 @@ export function EditarProducto() {
           Editar Producto
         </SectionTitle>
       </div>
+
+      {/* Estado del producto — PATCH /products/{id}/status */}
+      <div className="bg-white border border-ash p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-1">Estado del producto</p>
+          <p className="text-sm text-ink-muted">
+            Controla la visibilidad y disponibilidad en el catálogo.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="status" className="text-[10px] tracking-widest uppercase text-ink-muted">Cambiar estado</label>
+          <select
+            id="status"
+            value={status}
+            disabled={statusSaving}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="text-sm border border-ash bg-pearl px-3 py-2 text-ink-primary focus:outline-none focus:border-gold cursor-pointer disabled:opacity-50"
+          >
+            {PRODUCT_STATUSES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {statusError && (
+        <p role="alert" className="mb-6 text-xs tracking-widest uppercase text-red-600 border-l-2 border-red-600 pl-3">
+          {statusError}
+        </p>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -210,6 +255,38 @@ export function EditarProducto() {
           </Button>
         </div>
       </form>
+
+      {/* Zona peligrosa — DELETE /products/{id} */}
+      <div className="mt-8 bg-white border border-red-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-xs tracking-[0.3em] uppercase text-red-600 mb-1">Eliminar producto</p>
+          <p className="text-sm text-ink-muted">Esta acción no se puede deshacer.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="text-xs tracking-widest uppercase text-red-600 border border-red-600 px-5 py-3 hover:bg-red-600 hover:text-white transition-colors"
+        >
+          Eliminar
+        </button>
+      </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/40 backdrop-blur-sm p-4">
+          <div className="bg-white border border-red-600 p-8 max-w-sm w-full shadow-2xl">
+            <h3 className="font-display text-2xl text-red-600 mb-2">Eliminar Producto</h3>
+            <p className="text-sm text-ink-secondary mb-8">
+              Vas a eliminar <span className="font-bold">{form.name}</span>. Esta acción no se puede deshacer. ¿Continuar?
+            </p>
+            <div className="flex gap-4 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancelar</Button>
+              <Button variant="primary" size="sm" className="!bg-red-600 !border-red-600 hover:!bg-red-700 hover:!border-red-700" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Eliminando…' : 'Eliminar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
