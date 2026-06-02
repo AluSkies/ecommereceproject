@@ -1,3 +1,5 @@
+import React from 'react'
+
 const variantClasses = {
   primary:
     'bg-gold text-obsidian font-semibold hover:bg-gold-light active:bg-gold-dark',
