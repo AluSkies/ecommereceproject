@@ -73,6 +73,11 @@ export function AuthProvider({ children }) {
     setUser(res.user)
   }, [])
 
+  const updateUser = useCallback((updated) => {
+    // Refresca el usuario en contexto + localStorage (p. ej. tras editar el perfil).
+    setUser((prev) => ({ ...prev, ...updated }))
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await apiPost('/auth/logout', {})
@@ -94,9 +99,10 @@ export function AuthProvider({ children }) {
       isAdmin: user?.role === 'ADMIN',
       login,
       register,
-      logout
+      logout,
+      updateUser
     }),
-    [user, token, login, register, logout],
+    [user, token, login, register, logout, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

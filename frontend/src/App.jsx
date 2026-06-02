@@ -9,12 +9,17 @@ import { Cart } from '@/pages/Cart'
 import { Checkout } from '@/pages/Checkout'
 import { OrderConfirmation } from '@/pages/OrderConfirmation'
 import { Orders } from '@/pages/Orders'
+import { Perfil } from '@/pages/Perfil'
 import { AdminRoute } from '@/components/AdminRoute'
 import { NuevoProducto } from '@/pages/admin/NuevoProducto'
 import { EditarProducto } from '@/pages/admin/EditarProducto'
+import { AdminInventario } from '@/pages/admin/AdminInventario'
 import { GestionCupones } from '@/pages/admin/GestionCupones'
 import { NuevoCupon } from '@/pages/admin/NuevoCupon'
+import { EditarCupon } from '@/pages/admin/EditarCupon'
 import { AdminOrdenes } from '@/pages/admin/AdminOrdenes'
+import { GestionCategorias } from '@/pages/admin/GestionCategorias'
+import { GestionUsuarios } from '@/pages/admin/GestionUsuarios'
 
 export default function App() {
   return (
@@ -31,14 +36,19 @@ export default function App() {
           <Route path="checkout" element={<Checkout />} />
           <Route path="orden/:id" element={<OrderConfirmation />} />
           <Route path="mis-ordenes" element={<Orders />} />
-          
+          <Route path="perfil" element={<Perfil />} />
+
           {/* Rutas protegidas EXCLUSIVAS para el Administrador */}
           <Route element={<AdminRoute />}>
             <Route path="admin/productos/nuevo" element={<NuevoProducto />} />
             <Route path="admin/productos/editar/:id" element={<EditarProducto />} />
+            <Route path="admin/inventario" element={<AdminInventario />} />
             <Route path="admin/cupones" element={<GestionCupones />} />
             <Route path="admin/cupones/nuevo" element={<NuevoCupon />} />
+            <Route path="admin/cupones/editar/:id" element={<EditarCupon />} />
             <Route path="admin/ordenes" element={<AdminOrdenes />} />
+            <Route path="admin/categorias" element={<GestionCategorias />} />
+            <Route path="admin/usuarios" element={<GestionUsuarios />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

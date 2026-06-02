@@ -88,40 +88,51 @@ export function Navbar() {
           </NavLink>
 
           {isAuthenticated ? (
-            <NavLink
-              to="/mis-ordenes"
-              className={({ isActive }) =>
-                `text-sm tracking-widest uppercase transition-colors duration-300 ${
-                  isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
-                }`
-              }
-            >
-              Mis órdenes
-            </NavLink>
+            <>
+              <NavLink
+                to="/mis-ordenes"
+                className={({ isActive }) =>
+                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                  }`
+                }
+              >
+                Mis órdenes
+              </NavLink>
+              <NavLink
+                to="/perfil"
+                className={({ isActive }) =>
+                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                  }`
+                }
+              >
+                Mi perfil
+              </NavLink>
+            </>
           ) : null}
 
           {isAdmin ? (
             <>
-              <NavLink
-                to="/admin/cupones"
-                className={({ isActive }) =>
-                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
-                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
-                  }`
-                }
-              >
-                Cupones
-              </NavLink>
-              <NavLink
-                to="/admin/ordenes"
-                className={({ isActive }) =>
-                  `text-sm tracking-widest uppercase transition-colors duration-300 ${
-                    isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
-                  }`
-                }
-              >
-                Ventas
-              </NavLink>
+              {[
+                { to: '/admin/cupones', label: 'Cupones' },
+                { to: '/admin/inventario', label: 'Inventario' },
+                { to: '/admin/categorias', label: 'Categorías' },
+                { to: '/admin/usuarios', label: 'Usuarios' },
+                { to: '/admin/ordenes', label: 'Ventas' },
+              ].map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `text-sm tracking-widest uppercase transition-colors duration-300 ${
+                      isActive ? 'text-gold' : 'text-ink-muted hover:text-ink-primary'
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
             </>
           ) : null}
 
@@ -220,26 +231,35 @@ export function Navbar() {
               >
                 Mis órdenes
               </NavLink>
+              <NavLink
+                to="/perfil"
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+                }
+              >
+                Mi perfil
+              </NavLink>
               {isAdmin ? (
                 <>
-                  <NavLink
-                    to="/admin/cupones"
-                    onClick={() => setMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
-                    }
-                  >
-                    Cupones
-                  </NavLink>
-                  <NavLink
-                    to="/admin/ordenes"
-                    onClick={() => setMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
-                    }
-                  >
-                    Ventas
-                  </NavLink>
+                  {[
+                    { to: '/admin/cupones', label: 'Cupones' },
+                    { to: '/admin/inventario', label: 'Inventario' },
+                    { to: '/admin/categorias', label: 'Categorías' },
+                    { to: '/admin/usuarios', label: 'Usuarios' },
+                    { to: '/admin/ordenes', label: 'Ventas' },
+                  ].map((link) => (
+                    <NavLink
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+                      }
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
                 </>
               ) : null}
               <span className="text-xs tracking-widest uppercase text-ink-muted">
