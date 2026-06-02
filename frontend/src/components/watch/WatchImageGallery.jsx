@@ -1,23 +1,29 @@
 import { useState } from 'react'
+import { SmartImage } from '@/components/ui/SmartImage'
 
 export function WatchImageGallery({ images, alt }) {
   const [active, setActive] = useState(0)
+
+  // Guard: never index into an empty/undefined array — SmartImage will show
+  // its local placeholder when the src is falsy.
+  const list = Array.isArray(images) && images.length > 0 ? images : [undefined]
+  const current = list[Math.min(active, list.length - 1)]
 
   return (
     <div className="flex flex-col gap-4">
       {/* Main image */}
       <div className="aspect-watch overflow-hidden bg-smoke">
-        <img
-          src={images[active]}
+        <SmartImage
+          src={current}
           alt={alt}
           className="w-full h-full object-cover transition-opacity duration-300"
         />
       </div>
 
       {/* Thumbnails — only shown when more than 1 image */}
-      {images.length > 1 && (
+      {list.length > 1 && (
         <div className="flex gap-3">
-          {images.map((src, i) => (
+          {list.map((src, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
@@ -25,7 +31,7 @@ export function WatchImageGallery({ images, alt }) {
                 active === i ? 'ring-2 ring-gold ring-offset-2' : 'opacity-50 hover:opacity-80'
               }`}
             >
-              <img src={src} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover" />
+              <SmartImage src={src} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

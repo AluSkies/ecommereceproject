@@ -1,12 +1,16 @@
-const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80'
+import { categoryImage } from './categoryImages'
 
-function pickImage(images) {
-  if (!images || images.length === 0) return FALLBACK_IMAGE
+/**
+ * Elige la imagen principal de un producto. Si la URL no es absoluta
+ * (http/https) —p. ej. un seed viejo con rutas locales inexistentes— se cae
+ * a una imagen real de la categoría en vez de dejar un hueco.
+ */
+function pickImage(images, code) {
+  if (!images || images.length === 0) return categoryImage(code)
   const primary = [...images].sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
   )[0].url
-  return /^https?:\/\//i.test(primary) ? primary : FALLBACK_IMAGE
+  return /^https?:\/\//i.test(primary) ? primary : categoryImage(code)
 }
 
 function splitBrand(fullName) {
@@ -37,7 +41,7 @@ export function mapProduct(p, categoriesByCode) {
     categoryCode: code,
     categoryName,
     stock: p.stock ?? 0,
-    image: pickImage(p.images),
+    image: pickImage(p.images, code),
     description: p.description ?? '',
     specs: {
       movimiento: p.caliber ?? '—',

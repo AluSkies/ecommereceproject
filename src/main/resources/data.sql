@@ -97,18 +97,18 @@ INSERT INTO products (id, sku, name, slug, description, price, compare_at_price,
 -- 6) product_images  (2 per product -> 12 rows)
 -- ============================================================================
 INSERT INTO product_images (id, product_id, url, sort_order, alt_text) VALUES
-    ( 1, 1, '/images/rolex-1.jpg',    1, 'Rolex Submariner - vista frontal'),
-    ( 2, 1, '/images/rolex-2.jpg',    2, 'Rolex Submariner - vista lateral'),
-    ( 3, 2, '/images/omega-1.jpg',    1, 'Omega Speedmaster - vista frontal'),
-    ( 4, 2, '/images/omega-2.jpg',    2, 'Omega Speedmaster - detalle del dial'),
-    ( 5, 3, '/images/seiko-1.jpg',    1, 'Seiko Prospex Diver - vista frontal'),
-    ( 6, 3, '/images/seiko-2.jpg',    2, 'Seiko Prospex Diver - bisel'),
-    ( 7, 4, '/images/casio-1.jpg',    1, 'Casio G-Shock GA-2100 - vista frontal'),
-    ( 8, 4, '/images/casio-2.jpg',    2, 'Casio G-Shock GA-2100 - en muñeca'),
-    ( 9, 5, '/images/tissot-1.jpg',   1, 'Tissot Visodate - vista frontal'),
-    (10, 5, '/images/tissot-2.jpg',   2, 'Tissot Visodate - correa de cuero'),
-    (11, 6, '/images/longines-1.jpg', 1, 'Longines La Grande Classique - vista frontal'),
-    (12, 6, '/images/longines-2.jpg', 2, 'Longines La Grande Classique - perfil');
+    ( 1, 1, 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80', 1, 'Rolex Submariner - vista frontal'),
+    ( 2, 1, 'https://images.unsplash.com/photo-1434056886845-dac89ffe9b56?w=800&q=80', 2, 'Rolex Submariner - vista lateral'),
+    ( 3, 2, 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&q=80', 1, 'Omega Speedmaster - vista frontal'),
+    ( 4, 2, 'https://images.unsplash.com/photo-1548169874-53e85f753f1e?w=800&q=80', 2, 'Omega Speedmaster - detalle del dial'),
+    ( 5, 3, 'https://images.unsplash.com/photo-1622434641406-a158123450f9?w=800&q=80', 1, 'Seiko Prospex Diver - vista frontal'),
+    ( 6, 3, 'https://images.unsplash.com/photo-1620625515032-6ed0c1790c75?w=800&q=80', 2, 'Seiko Prospex Diver - bisel'),
+    ( 7, 4, 'https://images.unsplash.com/photo-1495704907664-81f74a7efd9b?w=800&q=80', 1, 'Casio G-Shock GA-2100 - vista frontal'),
+    ( 8, 4, 'https://images.unsplash.com/photo-1533139502658-0198f920d8e8?w=800&q=80', 2, 'Casio G-Shock GA-2100 - en muñeca'),
+    ( 9, 5, 'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=800&q=80', 1, 'Tissot Visodate - vista frontal'),
+    (10, 5, 'https://images.unsplash.com/photo-1508057198894-247b23fe5ade?w=800&q=80', 2, 'Tissot Visodate - correa de cuero'),
+    (11, 6, 'https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=800&q=80', 1, 'Longines La Grande Classique - vista frontal'),
+    (12, 6, 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=800&q=80', 2, 'Longines La Grande Classique - perfil');
 
 -- ============================================================================
 -- 7) discounts  (2 rows)

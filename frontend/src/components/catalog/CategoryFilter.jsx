@@ -3,10 +3,10 @@ export function CategoryFilter({ categories, selectedCode, onChange }) {
     <div className="flex flex-wrap gap-2">
       <button
         onClick={() => onChange(null)}
-        className={`px-4 py-1.5 text-xs tracking-widest uppercase transition-colors duration-300 ${
+        className={`px-4 py-1.5 rounded-full text-xs tracking-widest uppercase transition-all duration-300 ${
           selectedCode === null
-            ? 'bg-gold text-obsidian'
-            : 'border border-ash text-ink-muted hover:border-gold hover:text-gold'
+            ? 'bg-gold text-obsidian shadow-sm'
+            : 'border border-ash text-ink-muted hover:border-gold hover:text-gold hover:bg-gold-muted'
         }`}
       >
         Todos

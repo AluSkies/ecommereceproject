@@ -9,6 +9,10 @@
     box-sizing: border-box;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     background-color: #FFFFFF;
@@ -21,5 +25,49 @@
   img {
     display: block;
     max-width: 100%;
+  }
+
+  /* Brand-tinted text selection */
+  ::selection {
+    background-color: #C9A84C;
+    color: #0A0A0A;
+  }
+
+  /* Coherent, accessible keyboard focus across interactive elements */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #C9A84C;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Shimmer skeleton shown by SmartImage until the real image paints */
+  .img-skeleton {
+    background-image: linear-gradient(
+      100deg,
+      #F0F0F0 8%,
+      #E4E4E4 22%,
+      #F0F0F0 36%
+    );
+    background-size: 200% 100%;
+    animation: img-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes img-shimmer {
+    0% { background-position: 150% 0; }
+    100% { background-position: -150% 0; }
   }
 }

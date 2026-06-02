@@ -4,15 +4,8 @@ import { WatchGrid } from '@/components/watch/WatchGrid'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-
-const categoryImageByCode = {
-  LUXURY: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800&q=80',
-  SPORT: 'https://images.unsplash.com/photo-1548171916-c8fd5d9f3f9c?w=800&q=80',
-  VINTAGE: 'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=800&q=80',
-  DRESS: 'https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=800&q=80',
-}
-const FALLBACK_CATEGORY_IMAGE =
-  'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80'
+import { SmartImage } from '@/components/ui/SmartImage'
+import { categoryImageByCode, FALLBACK_CATEGORY_IMAGE } from '@/lib/categoryImages'
 
 export function Home() {
   const { data: featured, loading, error } = useFeaturedWatches(4)
@@ -33,17 +26,23 @@ export function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="max-w-xl">
-            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-4">
+            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-4 animate-fade-in-up">
               Nueva Colección
             </p>
-            <h1 className="font-display text-5xl md:text-7xl font-medium text-ink-inverse leading-[1.05] tracking-tight">
+            <h1
+              className="font-display text-5xl md:text-7xl font-medium text-ink-inverse leading-[1.05] tracking-tight animate-fade-in-up"
+              style={{ animationDelay: '0.1s' }}
+            >
               El tiempo,<br />
               redefinido.
             </h1>
-            <p className="mt-6 text-ink-inverse/60 text-lg leading-relaxed max-w-sm">
+            <p
+              className="mt-6 text-ink-inverse/60 text-lg leading-relaxed max-w-sm animate-fade-in-up"
+              style={{ animationDelay: '0.2s' }}
+            >
               La colección completa, elegí el tuyo.
             </p>
-            <div className="mt-10">
+            <div className="mt-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <Button as={Link} to="/catalogo" variant="primary" size="lg">
                 Explorar Colección
               </Button>
@@ -102,7 +101,7 @@ export function Home() {
                   to={`/catalogo?categoria=${encodeURIComponent(cat.code)}`}
                   className="group relative overflow-hidden aspect-[4/5] bg-obsidian"
                 >
-                  <img
+                  <SmartImage
                     src={categoryImageByCode[cat.code] ?? FALLBACK_CATEGORY_IMAGE}
                     alt={cat.name}
                     className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-40"
