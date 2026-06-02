@@ -1,6 +1,7 @@
 package com.uade.tpo.demo.services;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,9 +28,20 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    public List<UserResponse> getAllUsers() {
+        User loggedUser = getLoggedUser();
+        if (loggedUser.getRole() != Role.ADMIN) {
+            throw new UnauthorizedUserAccessException("Solo un ADMIN puede listar usuarios");
+        }
+        return userRepository.findAll().stream()
+                .map(this::convertToUserResponse)
+                .toList();
+    }
+
+    @Override
     public UserResponse getUserById(Long id) {
         User loggedUser = getLoggedUser();
-        validateSelfOrSellerAccess(loggedUser, id);
+        validateSelfOrAdminAccess(loggedUser, id);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
@@ -40,7 +52,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse updateUser(Long id, UserUpdateRequest request) {
         User loggedUser = getLoggedUser();
-        validateSelfOrSellerAccess(loggedUser, id);
+        validateSelfOrAdminAccess(loggedUser, id);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
@@ -124,19 +136,19 @@ public class UserServiceImpl implements UserService {
     public void disableUser(Long id) {
         User loggedUser = getLoggedUser();
 
-        if (loggedUser.getRole() != Role.SELLER) {
-            throw new UnauthorizedUserAccessException("Solo el usuario con rol SELLER puede deshabilitar usuarios");
+        if (loggedUser.getRole() != Role.ADMIN) {
+            throw new UnauthorizedUserAccessException("Solo un ADMIN puede deshabilitar usuarios");
         }
 
         User userToDisable = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
         if (loggedUser.getId().equals(userToDisable.getId())) {
-            throw new InvalidUserOperationException("El usuario SELLER no puede deshabilitarse a sí mismo");
+            throw new InvalidUserOperationException("El ADMIN no puede deshabilitarse a sí mismo");
         }
 
-        if (userToDisable.getRole() == Role.SELLER) {
-            throw new InvalidUserOperationException("No se puede deshabilitar al usuario SELLER");
+        if (userToDisable.getRole() == Role.ADMIN) {
+            throw new InvalidUserOperationException("No se puede deshabilitar a otro ADMIN");
         }
 
         if (Boolean.FALSE.equals(userToDisable.getIsActive())) {
@@ -162,11 +174,11 @@ public class UserServiceImpl implements UserService {
         return convertToUserResponse(getLoggedUser());
     }
 
-    private void validateSelfOrSellerAccess(User loggedUser, Long targetUserId) {
-        boolean isSeller = loggedUser.getRole() == Role.SELLER;
+    private void validateSelfOrAdminAccess(User loggedUser, Long targetUserId) {
+        boolean isAdmin = loggedUser.getRole() == Role.ADMIN;
         boolean isSelf = loggedUser.getId().equals(targetUserId);
 
-        if (!isSeller && !isSelf) {
+        if (!isAdmin && !isSelf) {
             throw new UnauthorizedUserAccessException("No tenés permisos para acceder a este usuario");
         }
     }

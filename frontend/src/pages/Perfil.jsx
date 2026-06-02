@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
-import { usersApiGet, usersApiPut, ApiError } from '@/lib/api'
+import { apiGet, apiPut, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
@@ -35,8 +35,8 @@ export function Perfil() {
     if (!isAuthenticated) return
     const controller = new AbortController()
     setLoading(true)
-    // GET /api/users/me — el backend resuelve el usuario logueado por el token.
-    usersApiGet('/users/me', controller.signal)
+    // GET /api/v1/users/me — el backend resuelve el usuario logueado por el token.
+    apiGet('/users/me', controller.signal)
       .then((data) => {
         setForm({ ...EMPTY_FORM, ...data, password: '' })
         setLoadError(null)
@@ -83,7 +83,7 @@ export function Perfil() {
       }
       if (form.password.trim()) payload.password = form.password.trim()
 
-      const updated = await usersApiPut(`/users/${user.id}`, payload)
+      const updated = await apiPut(`/users/${user.id}`, payload)
       // Refrescamos el usuario en contexto para que Navbar / Checkout vean los nuevos datos.
       updateUser(updated ?? payload)
       setForm((prev) => ({ ...prev, ...(updated ?? {}), password: '' }))

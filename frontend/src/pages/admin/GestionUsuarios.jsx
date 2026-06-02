@@ -1,63 +1,57 @@
-import { useState } from 'react'
-import { usersApiGet, usersApiPatch, ApiError } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { apiGet, apiPatch, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
-function Row({ label, value }) {
-  return (
-    <div className="grid grid-cols-[10rem,1fr] gap-4 py-2 border-b border-ash last:border-b-0">
-      <dt className="text-xs tracking-widest uppercase text-ink-muted">{label}</dt>
-      <dd className="text-sm text-ink-primary">{value || '—'}</dd>
-    </div>
-  )
+function roleBadge(role) {
+  const base = 'inline-block text-[10px] tracking-widest uppercase px-2 py-0.5 border'
+  if (role === 'ADMIN') return `${base} border-gold text-gold bg-gold/10`
+  return `${base} border-ash text-ink-muted bg-smoke`
 }
 
 export function GestionUsuarios() {
-  const [searchId, setSearchId] = useState('')
-  const [foundUser, setFoundUser] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [confirmDisable, setConfirmDisable] = useState(false)
-  const [disabling, setDisabling] = useState(false)
-  const [notice, setNotice] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const [confirmDisable, setConfirmDisable] = useState(null)
+  const [disablingId, setDisablingId] = useState(null)
 
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    const id = searchId.trim()
-    if (!id) return
+  const fetchUsers = async () => {
     setLoading(true)
-    setError(null)
-    setNotice(null)
-    setFoundUser(null)
     try {
-      // GET /api/users/{id} — no existe endpoint para listar todos los usuarios.
-      const user = await usersApiGet(`/users/${id}`)
-      setFoundUser(user)
+      // GET /api/v1/users — listado completo (solo ADMIN, validado en el backend).
+      const data = await apiGet('/users')
+      setUsers(data)
+      setError(null)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se encontró un usuario con ese ID.')
+      setError(err instanceof ApiError ? err.message : 'No se pudieron cargar los usuarios.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDisable = async () => {
-    setDisabling(true)
-    setError(null)
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const handleDisable = async (id) => {
+    setDisablingId(id)
+    setActionError(null)
     try {
-      await usersApiPatch(`/users/${foundUser.id}/disable`, {})
-      setFoundUser((prev) => ({ ...prev, isActive: false }))
-      setNotice('El usuario fue deshabilitado.')
+      await apiPatch(`/users/${id}/disable`, {})
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, isActive: false } : u)))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo deshabilitar el usuario.')
+      setActionError(err instanceof ApiError ? err.message : 'No se pudo deshabilitar el usuario.')
     } finally {
-      setDisabling(false)
-      setConfirmDisable(false)
+      setDisablingId(null)
+      setConfirmDisable(null)
     }
   }
 
   return (
-    <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       <div className="mb-10">
         <Divider className="mb-4" />
         <SectionTitle subtitle="Administración de cuentas">
@@ -65,78 +59,59 @@ export function GestionUsuarios() {
         </SectionTitle>
       </div>
 
-      <p className="text-sm text-ink-muted mb-6">
-        El backend no expone un listado de usuarios. Buscá una cuenta por su ID para ver sus datos o deshabilitarla.
-      </p>
-
-      <form onSubmit={handleSearch} className="bg-white border border-ash p-6 mb-8 flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="searchId" className="text-[10px] tracking-widest uppercase text-ink-muted">ID de usuario</label>
-          <input
-            id="searchId"
-            type="number"
-            min={1}
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            placeholder="2"
-            className="w-32 border border-ash bg-pearl px-3 py-2 text-sm text-ink-primary focus:outline-none focus:border-gold"
-          />
-        </div>
-        <Button type="submit" variant="primary" size="md" disabled={loading} className={loading ? 'opacity-60 cursor-not-allowed' : ''}>
-          {loading ? 'Buscando…' : 'Buscar'}
-        </Button>
-      </form>
-
-      {error && (
+      {actionError && (
         <div className="mb-8 bg-red-50 border border-red-200 p-4">
-          <p className="text-sm tracking-widest uppercase text-red-600">{error}</p>
-        </div>
-      )}
-      {notice && (
-        <div className="mb-8 bg-gold/10 border border-gold p-4">
-          <p className="text-sm tracking-widest uppercase text-gold">{notice}</p>
+          <p className="text-sm tracking-widest uppercase text-red-600">{actionError}</p>
         </div>
       )}
 
-      {foundUser && (
-        <div className="bg-white border border-ash p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div>
-              <p className="font-display text-2xl text-ink-primary">
-                {[foundUser.firstName, foundUser.lastName].filter(Boolean).join(' ') || foundUser.email}
-              </p>
-              <p className="text-xs tracking-widest uppercase text-ink-muted mt-1">ID #{foundUser.id} · {foundUser.role}</p>
-            </div>
-            <span className={`inline-block text-[10px] tracking-widest uppercase px-3 py-1 border ${
-              foundUser.isActive === false
-                ? 'border-red-600 text-red-600 bg-red-50'
-                : 'border-gold text-gold bg-gold/10'
-            }`}>
-              {foundUser.isActive === false ? 'Deshabilitado' : 'Activo'}
-            </span>
-          </div>
+      {loading ? (
+        <p className="text-ink-muted text-sm tracking-widest uppercase text-center py-12">Cargando usuarios…</p>
+      ) : error ? (
+        <div className="bg-white border border-ash p-8 text-center">
+          <p className="text-sm text-red-600 tracking-widest uppercase">{error}</p>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="bg-white border border-ash p-12 text-center">
+          <p className="text-ink-muted text-sm tracking-widest uppercase">No hay usuarios registrados</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {users.map((u) => {
+            const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ')
+            const disabled = u.isActive === false
+            return (
+              <div key={u.id} className="bg-white border border-ash p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:border-gold transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <p className="font-display text-lg text-ink-primary truncate">{fullName || u.email}</p>
+                    <span className={roleBadge(u.role)}>{u.role}</span>
+                    {disabled && (
+                      <span className="inline-block text-[10px] tracking-widest uppercase px-2 py-0.5 border border-red-600 text-red-600 bg-red-50">
+                        Deshabilitado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-ink-muted mt-1">ID #{u.id} · {u.email}</p>
+                </div>
 
-          <dl>
-            <Row label="Email" value={foundUser.email} />
-            <Row label="Teléfono" value={foundUser.phone} />
-            <Row label="Dirección" value={[foundUser.line1, foundUser.line2].filter(Boolean).join(', ')} />
-            <Row label="Ciudad" value={foundUser.city} />
-            <Row label="Región" value={foundUser.region} />
-            <Row label="Código postal" value={foundUser.postalCode} />
-            <Row label="País" value={foundUser.countryCode} />
-          </dl>
-
-          {foundUser.isActive !== false && (
-            <div className="mt-8 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setConfirmDisable(true)}
-                className="text-xs tracking-widest uppercase text-red-600 border border-red-600 px-5 py-3 hover:bg-red-600 hover:text-white transition-colors"
-              >
-                Deshabilitar usuario
-              </button>
-            </div>
-          )}
+                <div className="shrink-0">
+                  {disabled ? (
+                    <span className="text-xs tracking-widest uppercase text-ink-muted">—</span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={disablingId === u.id}
+                      onClick={() => setConfirmDisable(u)}
+                      className="text-xs tracking-widest uppercase text-red-600 border border-red-600 px-4 py-2 hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      {disablingId === u.id ? 'Procesando…' : 'Deshabilitar'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -145,12 +120,12 @@ export function GestionUsuarios() {
           <div className="bg-white border border-red-600 p-8 max-w-sm w-full shadow-2xl">
             <h3 className="font-display text-2xl text-red-600 mb-2">Deshabilitar Usuario</h3>
             <p className="text-sm text-ink-secondary mb-8">
-              La cuenta <span className="font-bold">#{foundUser?.id}</span> no podrá iniciar sesión. ¿Continuar?
+              La cuenta <span className="font-bold">#{confirmDisable.id}</span> ({confirmDisable.email}) no podrá iniciar sesión. ¿Continuar?
             </p>
             <div className="flex gap-4 justify-end">
-              <Button variant="ghost" size="sm" onClick={() => setConfirmDisable(false)} disabled={disabling}>Cancelar</Button>
-              <Button variant="primary" size="sm" className="!bg-red-600 !border-red-600 hover:!bg-red-700 hover:!border-red-700" onClick={handleDisable} disabled={disabling}>
-                {disabling ? 'Procesando…' : 'Deshabilitar'}
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDisable(null)}>Cancelar</Button>
+              <Button variant="primary" size="sm" className="!bg-red-600 !border-red-600 hover:!bg-red-700 hover:!border-red-700" onClick={() => handleDisable(confirmDisable.id)}>
+                Deshabilitar
               </Button>
             </div>
           </div>

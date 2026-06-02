@@ -78,21 +78,26 @@ usado por el frontend React (`frontend/src`), o que su ausencia esté justificad
 | GET | `/discounts/expired` | 🟢 | `admin/GestionCupones.jsx` (tab "Vencidos") |
 | GET | `/discounts/scheduled` | 🟢 | `admin/GestionCupones.jsx` (tab "Programados") |
 
-## User profile — `/api/users` (⚠️ controller `@Deprecated`)
+## User profile — `/api/v1/users`
 | Método | Endpoint | Estado | Dónde / Justificación |
 |---|---|---|---|
+| GET | `/users` | 🟢 | `admin/GestionUsuarios.jsx` (tabla, listado completo) |
 | GET | `/users/me` | 🟢 | `Perfil.jsx` (carga del perfil) |
-| GET | `/users/{id}` | 🟢 | `admin/GestionUsuarios.jsx` (búsqueda por id) |
-| PUT | `/users/{id}` | 🟢 | `Perfil.jsx` (guardar cambios) |
+| GET | `/users/{id}` | 🟢 | reservado para admin (consulta puntual) |
+| PUT | `/users/{id}` | 🟢 | `Perfil.jsx` (guardar cambios; self o admin) |
 | PATCH | `/users/{id}/disable` | 🟢 | `admin/GestionUsuarios.jsx` |
 
-> **Notas backend:**
-> - `UserController` está marcado `@Deprecated` y mapeado a `/users` + `/api/users`
->   (fuera de `/api/v1`). El frontend lo consume con los helpers `usersApi*` de
->   `lib/api.js`, que usan `API_ROOT` (origen sin `/v1`). Si el backend retira este
->   controller, Perfil y Gestión de Usuarios deberán reapuntarse.
-> - **No existe endpoint para listar todos los usuarios**, por eso el panel admin
->   funciona por búsqueda de ID + deshabilitar, no como tabla.
+> **Correcciones de backend aplicadas (antes pendientes):**
+> - `UserController` ya **no** está `@Deprecated` y se reubicó de `/api/users` a
+>   `/api/v1/users`, consistente con el resto de la API. El frontend lo consume con
+>   los helpers normales (`apiGet`/`apiPut`/`apiPatch`); se eliminó el workaround
+>   `usersApi*`/`API_ROOT`.
+> - Se agregó `GET /api/v1/users` (listado), por lo que el panel admin ahora es una
+>   **tabla** en vez de búsqueda por ID.
+> - Se corrigió la autorización en `UserServiceImpl`: usaba `Role.SELLER` (vestigial,
+>   ningún usuario lo tiene) en vez de `Role.ADMIN`, lo que impedía al admin real
+>   ver/deshabilitar cuentas. Ahora get/update son self-or-admin y list/disable son
+>   admin-only.
 
 ## Categories — `/api/v1/categories`
 | Método | Endpoint | Estado | Dónde |

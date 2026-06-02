@@ -1,9 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4002/api/v1'
 
-// Origen sin el sufijo /v1. Lo usan los endpoints de UserController, que el
-// backend mapea a /api/users (fuera de /api/v1). Ver usersApi* más abajo.
-export const API_ROOT = BASE_URL.replace(/\/v1$/, '')
-
 const TOKEN_STORAGE_KEY = 'tempus.token'
 
 export class ApiError extends Error {
@@ -48,8 +44,8 @@ async function parseError(res, path) {
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export async function apiGet(path, signal, base = BASE_URL) {
-  const res = await fetch(`${base}${path}`, {
+export async function apiGet(path, signal) {
+  const res = await fetch(`${BASE_URL}${path}`, {
     headers: { Accept: 'application/json', ...authHeaders() },
     signal,
   })
@@ -77,8 +73,8 @@ export async function apiGetNullable(path, signal) {
   return res.json()
 }
 
-async function requestWithBody(method, path, body, signal, base = BASE_URL) {
-  const res = await fetch(`${base}${path}`, {
+async function requestWithBody(method, path, body, signal) {
+  const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       Accept: 'application/json',
@@ -101,8 +97,8 @@ async function requestWithBody(method, path, body, signal, base = BASE_URL) {
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export function apiPost(path, body, signal, base = BASE_URL) {
-  return requestWithBody('POST', path, body, signal, base)
+export function apiPost(path, body, signal) {
+  return requestWithBody('POST', path, body, signal)
 }
 
 /**
@@ -111,8 +107,8 @@ export function apiPost(path, body, signal, base = BASE_URL) {
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export function apiPut(path, body, signal, base = BASE_URL) {
-  return requestWithBody('PUT', path, body, signal, base)
+export function apiPut(path, body, signal) {
+  return requestWithBody('PUT', path, body, signal)
 }
 
 /**
@@ -121,8 +117,8 @@ export function apiPut(path, body, signal, base = BASE_URL) {
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export function apiPatch(path, body, signal, base = BASE_URL) {
-  return requestWithBody('PATCH', path, body, signal, base)
+export function apiPatch(path, body, signal) {
+  return requestWithBody('PATCH', path, body, signal)
 }
 
 /**
@@ -130,8 +126,8 @@ export function apiPatch(path, body, signal, base = BASE_URL) {
  * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export async function apiDelete(path, signal, base = BASE_URL) {
-  const res = await fetch(`${base}${path}`, {
+export async function apiDelete(path, signal) {
+  const res = await fetch(`${BASE_URL}${path}`, {
     method: 'DELETE',
     headers: { Accept: 'application/json', ...authHeaders() },
     signal,
@@ -141,18 +137,4 @@ export async function apiDelete(path, signal, base = BASE_URL) {
   }
   if (res.status === 204) return undefined
   return res.json()
-}
-
-// --- Endpoints de usuario (UserController → /api/users, fuera de /api/v1) ---
-// Reutilizan los helpers de arriba pasando API_ROOT como base.
-export function usersApiGet(path, signal) {
-  return apiGet(path, signal, API_ROOT)
-}
-
-export function usersApiPut(path, body, signal) {
-  return apiPut(path, body, signal, API_ROOT)
-}
-
-export function usersApiPatch(path, body, signal) {
-  return apiPatch(path, body, signal, API_ROOT)
 }
