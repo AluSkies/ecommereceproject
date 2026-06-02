@@ -219,8 +219,6 @@ export function Navbar() {
               >
                 Mis órdenes
               </NavLink>
-<<<<<<< HEAD
-=======
               {isAdmin ? (
                 <>
                   <NavLink
@@ -243,7 +241,6 @@ export function Navbar() {
                   </NavLink>
                 </>
               ) : null}
->>>>>>> 2e9cbcd (Panel Admin)
               <span className="text-xs tracking-widest uppercase text-ink-muted">
                 Hola, <span className="text-ink-primary">{displayName}</span>
               </span>

@@ -113,12 +113,8 @@ export function ProductDetail() {
                 type="button"
                 aria-label="Disminuir cantidad"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-<<<<<<< HEAD
-                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer"
-=======
                 disabled={isOutOfStock}
                 className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
->>>>>>> 2e9cbcd (Panel Admin)
               >
                 −
               </button>
@@ -126,14 +122,9 @@ export function ProductDetail() {
               <button
                 type="button"
                 aria-label="Aumentar cantidad"
-<<<<<<< HEAD
-                onClick={() => setQuantity((q) => q + 1)}
-                className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer"
-=======
                 onClick={() => setQuantity((q) => Math.min(watch.stock, q + 1))}
                 disabled={isOutOfStock || quantity >= watch.stock}
                 className="px-4 py-3 text-ink-muted hover:text-gold transition-colors cursor-pointer disabled:opacity-40"
->>>>>>> 2e9cbcd (Panel Admin)
               >
                 +
               </button>
@@ -144,15 +135,6 @@ export function ProductDetail() {
               variant="primary"
               size="lg"
               onClick={handleAdd}
-<<<<<<< HEAD
-              disabled={adding}
-              className={`w-full sm:flex-1 ${adding ? 'opacity-60 cursor-not-allowed' : ''}`}
-            >
-              {adding ? 'Agregando…' : 'Agregar al carrito'}
-            </Button>
-          </div>
-
-=======
               disabled={adding || isOutOfStock}
               className={`w-full sm:flex-1 ${(adding || isOutOfStock) ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
@@ -171,8 +153,6 @@ export function ProductDetail() {
               Editar Producto
             </Button>
           ) : null}
-
->>>>>>> 2e9cbcd (Panel Admin)
           {feedback ? (
             <p
               role={feedback.kind === 'err' ? 'alert' : 'status'}
