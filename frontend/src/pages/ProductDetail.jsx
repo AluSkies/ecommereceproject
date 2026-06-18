@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useParams, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { useAllWatches, useWatchById } from '@/hooks/useWatches'
+import { useAllWatches, useWatchById, WatchCard } from '@/features/catalog'
 import { WatchImageGallery } from '@/components/watch/WatchImageGallery'
 import { WatchSpecs } from '@/components/watch/WatchSpecs'
-import { WatchCard } from '@/components/watch/WatchCard'
 import { Badge } from '@/components/ui/Badge'
 import { PriceTag } from '@/components/ui/PriceTag'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/lib/auth'
 import { useCart } from '@/lib/cart'
+import { useToast } from '@/lib/toast'
 import { ApiError } from '@/lib/api'
 
 export function ProductDetail() {
@@ -20,10 +20,10 @@ export function ProductDetail() {
   const { addItem } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
+  const toast = useToast()
 
   const [quantity, setQuantity] = useState(1)
   const [adding, setAdding] = useState(false)
-  const [feedback, setFeedback] = useState(null)
 
   if (loading) {
     return (
@@ -49,11 +49,14 @@ export function ProductDetail() {
       navigate('/login', { state: { from: location } })
       return
     }
+    if (isAdmin) {
+      toast({ message: 'No te podés comprar, es tu propia tienda pa', type: 'error' })
+      return
+    }
     setAdding(true)
-    setFeedback(null)
     try {
       await addItem(watch.id, quantity)
-      setFeedback({ kind: 'ok', message: 'Agregado al carrito' })
+      toast({ message: `${watch.name} agregado al carrito` })
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -61,7 +64,7 @@ export function ProductDetail() {
           : err instanceof Error
             ? err.message
             : 'No se pudo agregar al carrito'
-      setFeedback({ kind: 'err', message: msg })
+      toast({ message: msg, type: 'error' })
     } finally {
       setAdding(false)
     }
@@ -106,8 +109,8 @@ export function ProductDetail() {
 
           <p className="text-ink-secondary leading-relaxed">{watch.description}</p>
 
-          {/* Quantity + add to cart */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Quantity + add to cart (buyers only) */}
+          <div className={`flex flex-col sm:flex-row sm:items-center gap-4 ${isAdmin ? 'hidden' : ''}`}>
             <div className="flex items-center border border-ash bg-pearl select-none rounded-full overflow-hidden">
               <button
                 type="button"
@@ -153,26 +156,6 @@ export function ProductDetail() {
             >
               Editar Producto
             </Button>
-          ) : null}
-
-          {feedback ? (
-            <p
-              role={feedback.kind === 'err' ? 'alert' : 'status'}
-              className={`text-xs tracking-widest uppercase ${
-                feedback.kind === 'err' ? 'text-red-600' : 'text-gold'
-              }`}
-            >
-              {feedback.kind === 'ok' ? (
-                <>
-                  {feedback.message} —{' '}
-                  <Link to="/carrito" className="underline hover:text-gold-dark">
-                    ver carrito
-                  </Link>
-                </>
-              ) : (
-                feedback.message
-              )}
-            </p>
           ) : null}
 
           {/* Specs */}

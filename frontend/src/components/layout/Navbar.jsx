@@ -7,7 +7,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const drawerRef = useRef(null)
-  const { user, isAuthenticated, isAdmin, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, isSlayer, logout } = useAuth()
   const { itemCount } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,7 +66,9 @@ export function Navbar() {
     <header
       ref={drawerRef}
       className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ease-luxury ${
-        scrolled || menuOpen
+        isSlayer
+          ? 'bg-red-950 border-red-800'
+          : scrolled || menuOpen
           ? 'bg-pearl/80 backdrop-blur-md border-ash shadow-card'
           : 'bg-pearl border-transparent'
       }`}
@@ -79,7 +81,31 @@ export function Navbar() {
           Tempus
         </Link>
 
-        <div className="hidden md:flex items-center gap-5 lg:gap-7">
+        {isSlayer && (
+          <div className="hidden md:flex items-center gap-4">
+            <NavLink
+              to="/rip-and-tear"
+              className={({ isActive }) =>
+                `font-display font-black tracking-[0.25em] uppercase text-sm transition-colors duration-300 ${
+                  isActive ? 'text-red-500' : 'text-gold hover:text-red-400'
+                }`
+              }
+            >
+              ☠ RIP AND TEAR
+            </NavLink>
+            <div className="pl-4 border-l border-ash flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-sm tracking-wide uppercase text-ink-muted hover:text-gold transition-colors duration-300 cursor-pointer"
+              >
+                Salir
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!isSlayer && <div className="hidden md:flex items-center gap-5 lg:gap-7">
           <NavLink
             to="/"
             end
@@ -152,7 +178,7 @@ export function Navbar() {
           ) : null}
 
           <div className="flex items-center gap-4 pl-4 border-l border-ash">
-            {CartBadge}
+            {!isAdmin && CartBadge}
             {isAuthenticated ? (
               <>
                 <span className="text-xs tracking-wide uppercase whitespace-nowrap text-ink-muted">
@@ -180,11 +206,11 @@ export function Navbar() {
               </NavLink>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Mobile: cart icon + hamburger */}
         <div className="md:hidden flex items-center gap-2">
-          {CartBadge}
+          {!isAdmin && CartBadge}
           <button
             className="p-2 text-ink-primary"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -206,6 +232,27 @@ export function Navbar() {
 
       {menuOpen && (
         <div className="md:hidden bg-pearl border-t border-ash px-4 py-6 flex flex-col gap-6">
+          {isSlayer ? (
+            <>
+              <NavLink
+                to="/rip-and-tear"
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `font-display font-black tracking-[0.25em] uppercase text-sm ${isActive ? 'text-red-500' : 'text-gold hover:text-red-400'}`
+                }
+              >
+                ☠ RIP AND TEAR
+              </NavLink>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-left text-sm tracking-widest uppercase text-ink-secondary hover:text-gold cursor-pointer"
+              >
+                Salir
+              </button>
+            </>
+          ) : (
+            <>
           <NavLink
             to="/"
             end
@@ -225,15 +272,17 @@ export function Navbar() {
           >
             Catálogo
           </NavLink>
-          <NavLink
-            to="/carrito"
-            onClick={() => setMenuOpen(false)}
-            className={({ isActive }) =>
-              `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
-            }
-          >
-            Carrito {itemCount > 0 ? `(${itemCount})` : ''}
-          </NavLink>
+          {!isAdmin && (
+            <NavLink
+              to="/carrito"
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `text-sm tracking-widest uppercase ${isActive ? 'text-gold' : 'text-ink-secondary'}`
+              }
+            >
+              Carrito {itemCount > 0 ? `(${itemCount})` : ''}
+            </NavLink>
+          )}
 
           {isAuthenticated ? (
             <>
@@ -299,6 +348,8 @@ export function Navbar() {
             >
               Ingresar
             </NavLink>
+          )}
+            </>
           )}
         </div>
       )}

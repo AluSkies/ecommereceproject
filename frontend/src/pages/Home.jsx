@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useCategories, useFeaturedWatches } from '@/hooks/useWatches'
-import { WatchGrid } from '@/components/watch/WatchGrid'
+import { useCategories, useFeaturedWatches, WatchGrid } from '@/features/catalog'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'

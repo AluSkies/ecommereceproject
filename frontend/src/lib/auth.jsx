@@ -97,6 +97,7 @@ export function AuthProvider({ children }) {
       token,
       isAuthenticated: Boolean(token),
       isAdmin: user?.role === 'ADMIN',
+      isSlayer: user?.role === 'DOOM_SLAYER',
       login,
       register,
       logout,
