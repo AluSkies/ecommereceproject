@@ -2,6 +2,7 @@ package com.uade.tpo.demo.config;
 
 import com.uade.tpo.demo.domain.ProductStatus;
 import com.uade.tpo.demo.entity.Category;
+import com.uade.tpo.demo.entity.CustomerInfo;
 import com.uade.tpo.demo.entity.Product;
 import com.uade.tpo.demo.entity.ProductImage;
 import com.uade.tpo.demo.entity.User;
@@ -44,16 +45,34 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedUser(String username, String email, String rawPassword,
                           String name, String lastName, Role role) {
-        if (userRepository.existsByEmail(email)) return;
-        userRepository.save(User.builder()
-                .username(username)
-                .email(email)
-                .password(passwordEncoder.encode(rawPassword))
-                .name(name)
+        User user = userRepository.findByEmail(email).orElseGet(() -> User.builder()
+            .username(username)
+            .email(email)
+            .password(passwordEncoder.encode(rawPassword))
+            .name(name)
+            .lastName(lastName)
+            .role(role)
+            .createdAt(new Date())
+            .build());
+
+        if (user.getCustomerInfo() == null) {
+            user.setCustomerInfo(CustomerInfo.builder()
+                .user(user)
+                .firstName(name)
                 .lastName(lastName)
-                .role(role)
+                .phone("+54 11 1234 5678")
+                .line1("Av. Corrientes 1234")
+                .line2("")
+                .city("Buenos Aires")
+                .region("CABA")
+                .postalCode("C1043")
+                .countryCode("AR")
                 .createdAt(new Date())
+                .updatedAt(new Date())
                 .build());
+        }
+
+        userRepository.save(user);
     }
 
     // -------------------------------------------------------------------------

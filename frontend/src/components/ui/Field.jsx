@@ -16,6 +16,7 @@ export function Field({
   maxLength,
   autoComplete,
   disabled = false,
+  error,
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -36,8 +37,11 @@ export function Field({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className="border border-ash px-4 py-3 text-sm text-ink-primary bg-pearl focus:outline-none focus:border-gold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className={`border px-4 py-3 text-sm text-ink-primary bg-pearl focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+          error ? 'border-red-600 focus:border-red-600' : 'border-ash focus:border-gold'
+        }`}
       />
+      {error ? <p className="text-xs text-red-600 tracking-wide">{error}</p> : null}
     </div>
   )
 }

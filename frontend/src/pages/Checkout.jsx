@@ -55,7 +55,7 @@ function Field({
 
 export function Checkout() {
   const { user, isAuthenticated } = useAuth()
-  const { cart, clearCart } = useCart()
+  const { cart, resetLocal } = useCart()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
@@ -243,11 +243,8 @@ export function Checkout() {
       const order = await apiPost('/orders/checkout', payload)
       // Nota (demo): el comprobante queda solo en el cliente. El backend no persiste el archivo.
       // La orden se crea con estado PENDING a la espera de verificación manual del pago.
-      try {
-        await clearCart()
-      } catch (err) {
-        console.warn('No se pudo limpiar el carrito local', err)
-      }
+      // El backend ya marca el carrito como CONVERTED; acá solo limpiamos el estado local.
+      resetLocal()
       navigate(`/orden/${order.id}`, { replace: true, state: { order } })
     } catch (err) {
       if (err instanceof ApiError) {
