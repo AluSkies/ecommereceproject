@@ -32,6 +32,8 @@ async function parseError(res, path) {
     body = await res.json()
     if (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string') {
       message = body.message
+    } else if (body && typeof body === 'object' && 'mensaje' in body && typeof body.mensaje === 'string') {
+      message = body.mensaje
     }
   } catch {
     // body was not JSON — keep default message
@@ -56,7 +58,7 @@ export async function apiGet(path, signal) {
 }
 
 /**
- * Same as apiGet but returns null on 404 instead of throwing.
+ * Same as apiGet but returns null when the resource is absent.
  * @param {string} path
  * @param {AbortSignal} [signal]
  * @returns {Promise<any|null>}
@@ -66,7 +68,7 @@ export async function apiGetNullable(path, signal) {
     headers: { Accept: 'application/json', ...authHeaders() },
     signal,
   })
-  if (res.status === 404) return null
+  if (res.status === 204 || res.status === 404) return null
   if (!res.ok) {
     throw await parseError(res, `GET ${path}`)
   }

@@ -28,6 +28,7 @@ export function Perfil() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
 
@@ -57,6 +58,13 @@ export function Perfil() {
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }))
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
     setSuccess(false)
   }
 
@@ -64,22 +72,23 @@ export function Perfil() {
     e.preventDefault()
     if (submitting) return
     setError(null)
+    setFieldErrors({})
     setSuccess(false)
     setSubmitting(true)
 
     try {
       // Sólo enviamos password si el usuario escribió una nueva.
       const payload = {
-        email: form.email,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        phone: form.phone,
-        line1: form.line1,
-        line2: form.line2,
-        city: form.city,
-        region: form.region,
-        postalCode: form.postalCode,
-        countryCode: form.countryCode,
+        email: form.email.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        phone: form.phone.trim(),
+        line1: form.line1.trim(),
+        line2: form.line2.trim(),
+        city: form.city.trim(),
+        region: form.region.trim(),
+        postalCode: form.postalCode.trim(),
+        countryCode: form.countryCode.trim().toUpperCase(),
       }
       if (form.password.trim()) payload.password = form.password.trim()
 
@@ -89,7 +98,17 @@ export function Perfil() {
       setForm((prev) => ({ ...prev, ...(updated ?? {}), password: '' }))
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudieron guardar los cambios.')
+      if (err instanceof ApiError) {
+        const validations = err.body?.validations
+        if (validations && typeof validations === 'object') {
+          setFieldErrors(validations)
+          setError('Revisá los campos marcados.')
+        } else {
+          setError(err.message)
+        }
+      } else {
+        setError('No se pudieron guardar los cambios.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -122,31 +141,31 @@ export function Perfil() {
         <fieldset className="flex flex-col gap-6">
           <legend className="text-xs tracking-[0.3em] uppercase text-gold mb-2">Cuenta</legend>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Field label="Email" name="email" type="email" value={form.email} onChange={updateField} maxLength={100} autoComplete="email" />
-            <Field label="Nueva contraseña (opcional)" name="password" type="password" value={form.password} onChange={updateField} placeholder="Dejar vacío para no cambiarla" autoComplete="new-password" />
+            <Field label="Email" name="email" type="email" value={form.email} onChange={updateField} maxLength={100} autoComplete="email" error={fieldErrors.email} />
+            <Field label="Nueva contraseña (opcional)" name="password" type="password" value={form.password} onChange={updateField} placeholder="Dejar vacío para no cambiarla" autoComplete="new-password" error={fieldErrors.password} />
           </div>
         </fieldset>
 
         <fieldset className="flex flex-col gap-6">
           <legend className="text-xs tracking-[0.3em] uppercase text-gold mb-2">Datos personales</legend>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Field label="Nombre" name="firstName" value={form.firstName} onChange={updateField} maxLength={50} autoComplete="given-name" />
-            <Field label="Apellido" name="lastName" value={form.lastName} onChange={updateField} maxLength={50} autoComplete="family-name" />
+            <Field label="Nombre" name="firstName" value={form.firstName} onChange={updateField} maxLength={50} autoComplete="given-name" error={fieldErrors.firstName} />
+            <Field label="Apellido" name="lastName" value={form.lastName} onChange={updateField} maxLength={50} autoComplete="family-name" error={fieldErrors.lastName} />
           </div>
-          <Field label="Teléfono" name="phone" type="tel" value={form.phone} onChange={updateField} maxLength={30} autoComplete="tel" placeholder="+54 11 1234 5678" />
+          <Field label="Teléfono" name="phone" type="tel" value={form.phone} onChange={updateField} maxLength={30} autoComplete="tel" placeholder="+54 11 1234 5678" error={fieldErrors.phone} />
         </fieldset>
 
         <fieldset className="flex flex-col gap-6">
           <legend className="text-xs tracking-[0.3em] uppercase text-gold mb-2">Dirección</legend>
-          <Field label="Dirección" name="line1" value={form.line1} onChange={updateField} maxLength={100} autoComplete="address-line1" />
-          <Field label="Depto / Piso (opcional)" name="line2" value={form.line2} onChange={updateField} maxLength={100} autoComplete="address-line2" />
+          <Field label="Dirección" name="line1" value={form.line1} onChange={updateField} maxLength={100} autoComplete="address-line1" error={fieldErrors.line1} />
+          <Field label="Depto / Piso (opcional)" name="line2" value={form.line2} onChange={updateField} maxLength={100} autoComplete="address-line2" error={fieldErrors.line2} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Field label="Ciudad" name="city" value={form.city} onChange={updateField} maxLength={50} autoComplete="address-level2" />
-            <Field label="Provincia / Región" name="region" value={form.region} onChange={updateField} maxLength={50} autoComplete="address-level1" />
+            <Field label="Ciudad" name="city" value={form.city} onChange={updateField} maxLength={50} autoComplete="address-level2" error={fieldErrors.city} />
+            <Field label="Provincia / Región" name="region" value={form.region} onChange={updateField} maxLength={50} autoComplete="address-level1" error={fieldErrors.region} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Field label="Código postal" name="postalCode" value={form.postalCode} onChange={updateField} maxLength={20} autoComplete="postal-code" />
-            <Field label="País" name="countryCode" value={form.countryCode} onChange={updateField} maxLength={10} autoComplete="country" />
+            <Field label="Código postal" name="postalCode" value={form.postalCode} onChange={updateField} maxLength={20} autoComplete="postal-code" error={fieldErrors.postalCode} />
+            <Field label="País" name="countryCode" value={form.countryCode} onChange={updateField} maxLength={10} autoComplete="country" error={fieldErrors.countryCode} />
           </div>
         </fieldset>
 

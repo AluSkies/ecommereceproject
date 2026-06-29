@@ -2,33 +2,59 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiGet } from '@/lib/api'
 import { mapProduct } from '@/lib/productMapper'
 
-function useCatalogData() {
-  const [state, setState] = useState({
-    data: { watches: [], categories: [] },
-    loading: true,
-    error: null,
-  })
+const EMPTY_CATALOG = { watches: [], categories: [] }
+let catalogCache = null
+let catalogRequest = null
 
-  useEffect(() => {
-    const controller = new AbortController()
-    Promise.all([
-      apiGet('/categories', controller.signal),
-      apiGet('/products/active', controller.signal),
+function loadCatalogData() {
+  if (catalogCache) return Promise.resolve(catalogCache)
+
+  if (!catalogRequest) {
+    catalogRequest = Promise.all([
+      apiGet('/categories'),
+      apiGet('/products/active'),
     ])
       .then(([categories, products]) => {
         const byCode = new Map(categories.map((c) => [c.code, c]))
         const watches = products.map((p) => mapProduct(p, byCode))
-        setState({ data: { watches, categories }, loading: false, error: null })
+        catalogCache = { watches, categories }
+        return catalogCache
+      })
+      .finally(() => {
+        catalogRequest = null
+      })
+  }
+
+  return catalogRequest
+}
+
+function useCatalogData() {
+  const [state, setState] = useState(() => ({
+    data: catalogCache ?? EMPTY_CATALOG,
+    loading: !catalogCache,
+    error: null,
+  }))
+
+  useEffect(() => {
+    let mounted = true
+
+    loadCatalogData()
+      .then((data) => {
+        if (!mounted) return
+        setState({ data, loading: false, error: null })
       })
       .catch((err) => {
-        if (err.name === 'AbortError') return
+        if (!mounted) return
         setState({
-          data: { watches: [], categories: [] },
+          data: EMPTY_CATALOG,
           loading: false,
           error: err instanceof Error ? err.message : 'Error desconocido',
         })
       })
-    return () => controller.abort()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   return state

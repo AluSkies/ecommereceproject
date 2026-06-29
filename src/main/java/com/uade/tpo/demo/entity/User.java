@@ -20,6 +20,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -78,7 +79,7 @@ public class User implements UserDetails {
     @Builder.Default
     private Date updatedAt = new Date();
 
-    @Transient
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private CustomerInfo customerInfo;
 
     @OneToMany(mappedBy = "adminUser", fetch = FetchType.LAZY)

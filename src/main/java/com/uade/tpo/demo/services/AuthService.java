@@ -130,6 +130,8 @@ public class AuthService {
     }
 
     private UserResponse toUserResponse(User user) {
+        CustomerInfo customerInfo = user.getCustomerInfo();
+
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setEmail(user.getEmail());
@@ -138,6 +140,19 @@ public class AuthService {
         response.setIsActive(user.getIsActive());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+
+        if (customerInfo != null) {
+            response.setFirstName(customerInfo.getFirstName());
+            response.setLastName(customerInfo.getLastName());
+            response.setPhone(customerInfo.getPhone());
+            response.setLine1(customerInfo.getLine1());
+            response.setLine2(customerInfo.getLine2());
+            response.setCity(customerInfo.getCity());
+            response.setRegion(customerInfo.getRegion());
+            response.setPostalCode(customerInfo.getPostalCode());
+            response.setCountryCode(customerInfo.getCountryCode());
+        }
+
         return response;
     }
 }
