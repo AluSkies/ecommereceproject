@@ -151,6 +151,17 @@ public class CartService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<CartResponse> findActiveCartByCustomerId(Integer customerId) {
+        log.debug("Buscando carrito activo para cliente: {}", customerId);
+        if (customerId == null) {
+            throw new SolicitudInvalidaException("customerId");
+        }
+        Long userId = customerId.longValue();
+        return cartRepository.findFirstByUserIdAndStatus(userId, CartStatus.ACTIVE)
+            .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public CartResponse getCartByGuestToken(String guestToken) {
         log.debug("Obteniendo carrito de invitado: {}", guestToken);
         Cart carrito = cartRepository.findFirstByGuestTokenAndStatus(guestToken, CartStatus.ACTIVE)

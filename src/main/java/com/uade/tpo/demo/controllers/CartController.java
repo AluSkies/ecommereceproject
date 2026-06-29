@@ -54,8 +54,9 @@ public class CartController {
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<CartResponse> getCartByCustomer(@PathVariable Integer customerId) {
         log.info("GET /api/v1/cart/customer/{} - Obtener carrito del cliente", customerId);
-        CartResponse cart = cartService.getCartByCustomerId(customerId);
-        return ResponseEntity.ok(cart);
+        return cartService.findActiveCartByCustomerId(customerId)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**

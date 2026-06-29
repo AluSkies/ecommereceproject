@@ -58,7 +58,7 @@ export async function apiGet(path, signal) {
 }
 
 /**
- * Same as apiGet but returns null on 404 instead of throwing.
+ * Same as apiGet but returns null when the resource is absent.
  * @param {string} path
  * @param {AbortSignal} [signal]
  * @returns {Promise<any|null>}
@@ -68,7 +68,7 @@ export async function apiGetNullable(path, signal) {
     headers: { Accept: 'application/json', ...authHeaders() },
     signal,
   })
-  if (res.status === 404) return null
+  if (res.status === 204 || res.status === 404) return null
   if (!res.ok) {
     throw await parseError(res, `GET ${path}`)
   }
