@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" fill="none" role="img" aria-label="Imagen no disponible">
+  <rect width="600" height="800" fill="#F5F5F5"/>
+  <g transform="translate(300 360)" stroke="#C9A84C" stroke-width="3" fill="none" opacity="0.55">
+    <!-- lugs -->
+    <rect x="-26" y="-150" width="52" height="40" rx="8"/>
+    <rect x="-26" y="110" width="52" height="40" rx="8"/>
+    <!-- case -->
+    <circle r="118"/>
+    <circle r="100" stroke-width="2"/>
+    <!-- crown -->
+    <rect x="118" y="-12" width="16" height="24" rx="4"/>
+    <!-- hands -->
+    <line x1="0" y1="0" x2="0" y2="-62" stroke-width="4" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="44" y2="20" stroke-width="4" stroke-linecap="round"/>
+    <circle r="6" fill="#C9A84C" stroke="none"/>
+    <!-- hour ticks -->
+    <line x1="0" y1="-100" x2="0" y2="-86" stroke-width="3"/>
+    <line x1="0" y1="100" x2="0" y2="86" stroke-width="3"/>
+    <line x1="-100" y1="0" x2="-86" y2="0" stroke-width="3"/>
+    <line x1="100" y1="0" x2="86" y2="0" stroke-width="3"/>
+  </g>
+  <text x="300" y="600" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="40" letter-spacing="14" fill="#C9A84C" opacity="0.85">TEMPUS</text>
+  <text x="300" y="648" text-anchor="middle" font-family="'Inter', system-ui, sans-serif" font-size="18" letter-spacing="6" fill="#6B7280">IMAGEN NO DISPONIBLE</text>
+</svg>

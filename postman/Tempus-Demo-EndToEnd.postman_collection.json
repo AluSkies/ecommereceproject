@@ -1,0 +1,485 @@
+{
+  "info": {
+    "_postman_id": "9b2d4f8a-1c3e-4d5f-8a9b-0c1d2e3f4a5b",
+    "name": "Tempus API — Demo End-to-End Compra",
+    "description": "Colección de demostración del backend Tempus.\n\nRecorre el flujo completo del comprador: registro → login → exploración del catálogo → validación de descuento → carrito → checkout → orden PENDING → confirmación por ADMIN → orden CONFIRMED.\n\n## Cómo correr la demo\n1. Levantar la app (`./mvnw spring-boot:run`) y MySQL (`docker start tempus-mysql`).\n2. Ejecutar las carpetas en orden numérico (0 → 8). Cada request tiene scripts que guardan automáticamente `authToken`, `userId`, `customerId`, `cartId`, `orderId` y `orderNumber` para encadenar el flujo.\n3. La carpeta **7. Confirmación (ADMIN)** sobreescribe `authToken` con el del admin para autorizar el cambio de estado. Después no vuelve al token del buyer — si querés seguir actuando como buyer, ejecutá de nuevo `1.2 Login buyer1`.\n\n## Variables\n- `baseUrl`: http://localhost:4002\n- `authToken`: capturado automáticamente en register/login\n- `userId`, `customerId`: del usuario logueado\n- `productId`, `cartId`, `orderId`, `orderNumber`, `discountCode`: capturados durante el flujo\n\n## Usuarios seed usados en la demo\n- buyer1 / buyer123 (ROLE_BUYER, userId=2, customerId=1)\n- admin / admin123 (ROLE_ADMIN, userId=1)\n\n## Notas\n- El paso `1.1 Registro` crea un usuario nuevo con email único (timestamp). Si querés saltar el registro y demostrar sólo el flujo de compra, comenzá en `1.2 Login buyer1`.\n- `BIENVENIDA10` es un descuento ACTIVE seedeado (10%).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4002", "type": "string" },
+    { "key": "authToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "2", "type": "string" },
+    { "key": "customerId", "value": "1", "type": "string" },
+    { "key": "productId", "value": "1", "type": "string" },
+    { "key": "cartId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "orderNumber", "value": "", "type": "string" },
+    { "key": "discountCode", "value": "BIENVENIDA10", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{authToken}}", "type": "string" } ]
+  },
+  "item": [
+    {
+      "name": "0. Health check",
+      "description": "Verificación rápida de que el backend está arriba antes de empezar la demo.",
+      "item": [
+        {
+          "name": "0.1 Actuator health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator","health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Backend UP', function () { pm.response.to.have.status(200); });",
+                  "pm.test('status=UP', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Autenticación",
+      "description": "Registro de un usuario nuevo y login. Cualquiera de los dos deja el token listo para los siguientes pasos.",
+      "item": [
+        {
+          "name": "1.1 Registro de nuevo comprador",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo+{{$timestamp}}@tempus.local\",\n  \"password\": \"demo1234\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Comprador\",\n  \"phone\": \"+5411 5555-1234\",\n  \"line1\": \"Av. Corrientes 1234\",\n  \"line2\": \"Piso 3 Dpto B\",\n  \"city\": \"CABA\",\n  \"region\": \"BA\",\n  \"postalCode\": \"C1043AAZ\",\n  \"countryCode\": \"AR\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('devuelve token', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('token');",
+                  "});",
+                  "if (pm.response.code < 400) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.token) pm.collectionVariables.set('authToken', body.token);",
+                  "    if (body.user && body.user.id) {",
+                  "        pm.collectionVariables.set('userId', body.user.id);",
+                  "        pm.collectionVariables.set('customerId', body.user.id);",
+                  "    }",
+                  "    console.log('Usuario registrado y token guardado');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Login buyer1 (atajo: usuario seed)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"buyer1@tempus.local\",\n  \"password\": \"buyer123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('devuelve token', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('token');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.collectionVariables.set('authToken', body.token);",
+                  "if (body.user && body.user.id) pm.collectionVariables.set('userId', body.user.id);",
+                  "// buyer1 tiene customerId=1 en la seed",
+                  "pm.collectionVariables.set('customerId', 1);",
+                  "console.log('Login buyer1 OK — token y userId guardados');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Exploración del catálogo",
+      "description": "El comprador navega productos. Endpoints públicos.",
+      "item": [
+        {
+          "name": "2.1 Listar todos los productos",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/active", "host": ["{{baseUrl}}"], "path": ["api","v1","products","active"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('hay productos', function () {",
+                  "    const arr = pm.response.json();",
+                  "    pm.expect(arr.length).to.be.greaterThan(0);",
+                  "});",
+                  "// guarda el primer producto activo como candidato a compra",
+                  "const items = pm.response.json();",
+                  "if (items.length > 0) {",
+                  "    pm.collectionVariables.set('productId', items[0].id);",
+                  "    console.log('productId seleccionado:', items[0].id, '-', items[0].name);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Buscar por categoría (LUXURY)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/search/category?category=LUXURY",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products","search","category"],
+              "query": [ { "key": "category", "value": "LUXURY", "description": "LUXURY | SPORT | VINTAGE | DRESS" } ]
+            }
+          }
+        },
+        {
+          "name": "2.3 Ver detalle del producto elegido",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{productId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('producto activo y con stock', function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql('ACTIVE');",
+                  "    pm.expect(p.stock).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Validar código de descuento",
+      "description": "Antes de armar el carrito el comprador chequea que su cupón esté vigente.",
+      "item": [
+        {
+          "name": "3.1 Buscar descuento por código (BIENVENIDA10)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/discounts/code/{{discountCode}}", "host": ["{{baseUrl}}"], "path": ["api","v1","discounts","code","{{discountCode}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('descuento válido y activo', function () {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d.status).to.eql('ACTIVE');",
+                  "    pm.expect(d.valid).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Carrito",
+      "description": "Agregar producto, ver el carrito y actualizar cantidad.",
+      "item": [
+        {
+          "name": "4.1 Agregar producto al carrito",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/items", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","items"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 / 200', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "if (pm.response.code < 400) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.id) pm.collectionVariables.set('cartId', body.id);",
+                  "    console.log('cartId =', body.id, ' subtotal =', body.subtotal);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 Ver carrito",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('tiene al menos un item', function () {",
+                  "    pm.expect(pm.response.json().items.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Actualizar cantidad (a 2)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/{{cartId}}/items/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","cart","{{cartId}}","items","{{productId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Checkout (crear orden)",
+      "description": "Convierte el carrito en una orden con estado PENDING aplicando el descuento.",
+      "item": [
+        {
+          "name": "5.1 Checkout con descuento",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cartId\": {{cartId}},\n  \"customerId\": {{customerId}},\n  \"discountCode\": \"{{discountCode}}\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Comprador\",\n  \"phone\": \"+5411 5555-1234\",\n  \"line1\": \"Av. Corrientes 1234\",\n  \"line2\": \"Piso 3 Dpto B\",\n  \"city\": \"CABA\",\n  \"region\": \"BA\",\n  \"postalCode\": \"C1043AAZ\",\n  \"countryCode\": \"AR\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/checkout", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","checkout"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('orden en estado PENDING', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PENDING');",
+                  "});",
+                  "pm.test('aplicó descuento', function () {",
+                  "    pm.expect(pm.response.json().discountTotal).to.be.greaterThan(0);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('orderId', body.id);",
+                  "    pm.collectionVariables.set('orderNumber', body.orderNumber);",
+                  "    console.log('Orden creada:', body.orderNumber, '— total:', body.grandTotal);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Orden — vista del comprador",
+      "description": "El comprador consulta el estado de su orden recién creada.",
+      "item": [
+        {
+          "name": "6.1 Ver orden por id (esperado: PENDING)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('estado PENDING', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PENDING');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.2 Ver orden por número",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/number/{{orderNumber}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","number","{{orderNumber}}"] }
+          }
+        },
+        {
+          "name": "6.3 Listar órdenes del comprador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/customer/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","customer","{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Confirmación (ADMIN)",
+      "description": "El admin verifica el pago y confirma la orden.\n\nIMPORTANTE: `7.1` reemplaza el `authToken` por el del admin. Después de esta carpeta, si querés volver a actuar como buyer, ejecutá `1.2 Login buyer1` de nuevo.",
+      "item": [
+        {
+          "name": "7.1 Login admin",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.collectionVariables.set('authToken', body.token);",
+                  "console.log('Token de ADMIN guardado');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.2 Confirmar orden (PENDING → CONFIRMED)",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\",\n  \"note\": \"Pago verificado por administrador\",\n  \"changedBy\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}","status"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('estado CONFIRMED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('CONFIRMED');",
+                  "});",
+                  "pm.test('historial registra la transición', function () {",
+                  "    const history = pm.response.json().statusHistory || [];",
+                  "    const last = history[history.length - 1];",
+                  "    pm.expect(last.newStatus).to.eql('CONFIRMED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Verificación final",
+      "description": "Última lectura para confirmar que la orden quedó en CONFIRMED. Sirve como cierre de la demo.",
+      "item": [
+        {
+          "name": "8.1 Ver orden final (esperado: CONFIRMED)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{orderId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('orden CONFIRMED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('CONFIRMED');",
+                  "});",
+                  "console.log('✓ Demo end-to-end completa: orden', pm.collectionVariables.get('orderNumber'), 'CONFIRMED');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
