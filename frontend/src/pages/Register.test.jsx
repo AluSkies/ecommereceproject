@@ -4,7 +4,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { AuthProvider } from '@/lib/auth'
+import { Provider } from 'react-redux'
+import { makeStore } from '@/redux/store'
 import { Register } from './Register'
 
 const originalFetch = global.fetch
@@ -34,9 +35,9 @@ describe('Register page', () => {
   it('renders the registration form', () => {
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Register />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 
@@ -50,9 +51,9 @@ describe('Register page', () => {
   it('shows password mismatch validation error', async () => {
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Register />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 
@@ -72,9 +73,9 @@ describe('Register page', () => {
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Register />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 
@@ -118,9 +119,9 @@ describe('Register page', () => {
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Register />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 

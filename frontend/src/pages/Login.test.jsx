@@ -4,7 +4,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { AuthProvider } from '@/lib/auth'
+import { Provider } from 'react-redux'
+import { makeStore } from '@/redux/store'
 import { Login } from './Login'
 
 const originalFetch = global.fetch
@@ -23,9 +24,9 @@ describe('Login page', () => {
   it('renders the login form', () => {
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Login />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 
@@ -42,9 +43,9 @@ describe('Login page', () => {
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Login />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 
@@ -73,9 +74,9 @@ describe('Login page', () => {
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <Provider store={makeStore()}>
           <Login />
-        </AuthProvider>
+        </Provider>
       </MemoryRouter>,
     )
 

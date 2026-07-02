@@ -1,8 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../lib/auth'
+import { useSelector } from 'react-redux'
+import { selectIsAdmin, selectIsAuthenticated } from '@/redux/usersSlice'
 
 export function AdminRoute() {
-  const { isAdmin, isAuthenticated } = useAuth()
+  const isAdmin = useSelector(selectIsAdmin)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
 
   // Si no está logueado o no es administrador, lo redirigimos al inicio
   if (!isAuthenticated || !isAdmin) {

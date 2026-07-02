@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
+import { useSelector } from 'react-redux'
+import { selectIsAdmin } from '@/redux/usersSlice'
 import { Button } from '@/components/ui/Button'
 import { useCategories, useWatches } from './useCatalog'
 import { CategoryFilter } from './CategoryFilter'
@@ -10,7 +11,7 @@ import { WatchGrid } from './WatchGrid'
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: categories } = useCategories()
-  const { isAdmin } = useAuth()
+  const isAdmin = useSelector(selectIsAdmin)
 
   const rawParam = searchParams.get('categoria')
   const selectedCode =

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { toNumber } from '@/lib/cart'
+import { useSelector } from 'react-redux'
+import { selectCurrentUser, selectIsAuthenticated } from '@/redux/usersSlice'
+import { toNumber } from '@/lib/money'
 import { apiGet, ApiError } from '@/lib/api'
 import { statusClassName, statusLabel } from '@/lib/orders'
 import { Button } from '@/components/ui/Button'
@@ -21,7 +22,8 @@ function formatDate(iso) {
 }
 
 export function Orders() {
-  const { user, isAuthenticated } = useAuth()
+  const user = useSelector(selectCurrentUser)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

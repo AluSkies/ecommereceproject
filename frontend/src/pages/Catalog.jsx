@@ -4,13 +4,14 @@ import { WatchGrid } from '@/components/watch/WatchGrid'
 import { CategoryFilter } from '@/components/catalog/CategoryFilter'
 import { PriceRangeFilter } from '@/components/catalog/PriceRangeFilter'
 import { useState } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useSelector } from 'react-redux'
+import { selectIsAdmin } from '@/redux/usersSlice'
 import { Button } from '@/components/ui/Button'
 
 export function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: categories } = useCategories()
-  const { isAdmin } = useAuth()
+  const isAdmin = useSelector(selectIsAdmin)
 
   const rawParam = searchParams.get('categoria')
   const selectedCode = rawParam && categories.some((c) => c.code === rawParam)

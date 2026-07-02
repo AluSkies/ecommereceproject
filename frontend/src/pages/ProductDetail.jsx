@@ -6,9 +6,10 @@ import { WatchSpecs } from '@/components/watch/WatchSpecs'
 import { Badge } from '@/components/ui/Badge'
 import { PriceTag } from '@/components/ui/PriceTag'
 import { Button } from '@/components/ui/Button'
-import { useAuth } from '@/lib/auth'
-import { useCart } from '@/lib/cart'
-import { useToast } from '@/lib/toast'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectIsAuthenticated, selectIsAdmin, selectCurrentUser } from '@/redux/usersSlice'
+import { addItem } from '@/redux/cartsSlice'
+import { addToast } from '@/redux/uiSlice'
 import { ApiError } from '@/lib/api'
 
 export function ProductDetail() {
@@ -16,11 +17,12 @@ export function ProductDetail() {
   const numericId = id ? Number(id) : undefined
   const { data: watch, loading, error } = useWatchById(numericId)
   const { data: allWatches } = useAllWatches()
-  const { isAuthenticated, isAdmin } = useAuth()
-  const { addItem } = useCart()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const isAdmin = useSelector(selectIsAdmin)
+  const currentUser = useSelector(selectCurrentUser)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  const toast = useToast()
 
   const [quantity, setQuantity] = useState(1)
   const [adding, setAdding] = useState(false)
@@ -50,13 +52,13 @@ export function ProductDetail() {
       return
     }
     if (isAdmin) {
-      toast({ message: 'No te podés comprar, es tu propia tienda pa', type: 'error' })
+      dispatch(addToast({ message: 'No te podés comprar, es tu propia tienda pa', type: 'error' }))
       return
     }
     setAdding(true)
     try {
-      await addItem(watch.id, quantity)
-      toast({ message: `${watch.name} agregado al carrito` })
+      await dispatch(addItem({ customerId: currentUser.id, productId: watch.id, quantity })).unwrap()
+      dispatch(addToast({ message: `${watch.name} agregado al carrito` }))
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -64,7 +66,7 @@ export function ProductDetail() {
           : err instanceof Error
             ? err.message
             : 'No se pudo agregar al carrito'
-      toast({ message: msg, type: 'error' })
+      dispatch(addToast({ message: msg, type: 'error' }))
     } finally {
       setAdding(false)
     }

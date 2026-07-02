@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiGet, ApiError } from '@/lib/api'
-import { toNumber } from '@/lib/cart'
+import { toNumber } from '@/lib/money'
 import { Divider } from '@/components/ui/Divider'
 import { PriceTag } from '@/components/ui/PriceTag'
 import { SectionTitle } from '@/components/ui/SectionTitle'

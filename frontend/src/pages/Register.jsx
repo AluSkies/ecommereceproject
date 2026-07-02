@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
+import { useSelector, useDispatch } from 'react-redux'
+import { register, selectIsAuthenticated } from '@/redux/usersSlice'
 import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
@@ -72,7 +73,8 @@ function Field({
 }
 
 export function Register() {
-  const { register, isAuthenticated } = useAuth()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const [form, setForm] = useState(INITIAL_FORM)
@@ -123,7 +125,7 @@ export function Register() {
 
     setSubmitting(true)
     try {
-      await register(payload)
+      await dispatch(register(payload)).unwrap()
       navigate('/', { replace: true })
     } catch (err) {
       const { fields, message } = extractFieldErrors(err)

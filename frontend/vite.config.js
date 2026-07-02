@@ -8,6 +8,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // Dev: reenvía /api -> backend Spring en :4002 (mismo origen, sin CORS).
+    // Coincide con VITE_API_URL=/api/v1 de .env.development.
+    proxy: {
+      '/api': 'http://localhost:4002',
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

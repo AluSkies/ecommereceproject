@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
+import { useSelector, useDispatch } from 'react-redux'
+import { login, selectIsAuthenticated } from '@/redux/usersSlice'
 import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
 export function Login() {
-  const { login, isAuthenticated } = useAuth()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const redirectTo = location.state?.from?.pathname ?? '/'
@@ -27,7 +29,7 @@ export function Login() {
     setError(null)
     setSubmitting(true)
     try {
-      await login(username.trim(), password)
+      await dispatch(login({ username: username.trim(), password })).unwrap()
       navigate(redirectTo, { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { toNumber } from '@/lib/cart'
+import { useSelector } from 'react-redux'
+import { selectCurrentUser } from '@/redux/usersSlice'
+import { toNumber } from '@/lib/money'
 import { apiGet, apiPatch, ApiError } from '@/lib/api'
 import { statusClassName, statusLabel } from '@/lib/orders'
 import { Divider } from '@/components/ui/Divider'
@@ -38,7 +39,7 @@ function getAvailableStatuses(status) {
 }
 
 export function AdminOrdenes() {
-  const { user } = useAuth()
+  const user = useSelector(selectCurrentUser)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

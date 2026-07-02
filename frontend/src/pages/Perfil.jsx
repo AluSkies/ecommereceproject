@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectCurrentUser, selectIsAuthenticated, userUpdated } from '@/redux/usersSlice'
 import { apiGet, apiPut, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
@@ -22,7 +23,9 @@ const EMPTY_FORM = {
 }
 
 export function Perfil() {
-  const { isAuthenticated, user, updateUser } = useAuth()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const user = useSelector(selectCurrentUser)
+  const dispatch = useDispatch()
 
   const [form, setForm] = useState(EMPTY_FORM)
   const [loading, setLoading] = useState(true)
@@ -94,7 +97,7 @@ export function Perfil() {
 
       const updated = await apiPut(`/users/${user.id}`, payload)
       // Refrescamos el usuario en contexto para que Navbar / Checkout vean los nuevos datos.
-      updateUser(updated ?? payload)
+      dispatch(userUpdated(updated ?? payload))
       setForm((prev) => ({ ...prev, ...(updated ?? {}), password: '' }))
       setSuccess(true)
     } catch (err) {

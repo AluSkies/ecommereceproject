@@ -1,8 +1,12 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { useCart, toNumber } from '@/lib/cart'
-import { apiPost, apiGetNullable, ApiError } from '@/lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectCurrentUser, selectIsAuthenticated } from '@/redux/usersSlice'
+import { selectCart, cartCleared } from '@/redux/cartsSlice'
+import { checkout } from '@/redux/ordersSlice'
+import { fetchDiscountByCode } from '@/redux/discountsSlice'
+import { toNumber } from '@/lib/money'
+import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
 import { PriceTag } from '@/components/ui/PriceTag'
@@ -54,8 +58,10 @@ function Field({
 }
 
 export function Checkout() {
-  const { user, isAuthenticated } = useAuth()
-  const { cart, resetLocal } = useCart()
+  const user = useSelector(selectCurrentUser)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const cart = useSelector(selectCart)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
@@ -144,7 +150,7 @@ export function Checkout() {
     setValidatingDiscount(true)
     try {
       // GET /discounts/code/{code} — devuelve null (404) si no existe.
-      const discount = await apiGetNullable(`/discounts/code/${encodeURIComponent(code)}`)
+      const discount = await dispatch(fetchDiscountByCode(code)).unwrap()
       if (!discount) {
         setAppliedDiscount(null)
         setDiscountError('El código no existe o no es válido.')
@@ -240,11 +246,11 @@ export function Checkout() {
 
     setSubmitting(true)
     try {
-      const order = await apiPost('/orders/checkout', payload)
+      const order = await dispatch(checkout(payload)).unwrap()
       // Nota (demo): el comprobante queda solo en el cliente. El backend no persiste el archivo.
       // La orden se crea con estado PENDING a la espera de verificación manual del pago.
       // El backend ya marca el carrito como CONVERTED; acá solo limpiamos el estado local.
-      resetLocal()
+      dispatch(cartCleared())
       navigate(`/orden/${order.id}`, { replace: true, state: { order } })
     } catch (err) {
       if (err instanceof ApiError) {

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { useCart, toNumber } from '@/lib/cart'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectIsAuthenticated } from '@/redux/usersSlice'
+import { selectCart, selectCartLoading, updateItemQuantity, removeItem } from '@/redux/cartsSlice'
+import { toNumber } from '@/lib/money'
 import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
@@ -9,8 +11,10 @@ import { PriceTag } from '@/components/ui/PriceTag'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 
 export function Cart() {
-  const { isAuthenticated } = useAuth()
-  const { cart, loading, updateQuantity, removeItem } = useCart()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const cart = useSelector(selectCart)
+  const loading = useSelector(selectCartLoading)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const [pendingProductId, setPendingProductId] = useState(null)
   const [error, setError] = useState(null)
@@ -25,9 +29,9 @@ export function Cart() {
     setError(null)
     try {
       if (nextQty === 0) {
-        await removeItem(productId)
+        await dispatch(removeItem({ cartId: cart.id, productId })).unwrap()
       } else {
-        await updateQuantity(productId, nextQty)
+        await dispatch(updateItemQuantity({ cartId: cart.id, productId, quantity: nextQty })).unwrap()
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo actualizar el carrito')
@@ -40,7 +44,7 @@ export function Cart() {
     setPendingProductId(productId)
     setError(null)
     try {
-      await removeItem(productId)
+      await dispatch(removeItem({ cartId: cart.id, productId })).unwrap()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo eliminar el artículo')
     } finally {

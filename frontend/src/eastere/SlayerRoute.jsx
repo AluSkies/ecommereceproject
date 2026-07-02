@@ -1,8 +1,9 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
+import { useSelector } from 'react-redux'
+import { selectCurrentUser } from '@/redux/usersSlice'
 
 export function SlayerRoute() {
-  const { user } = useAuth()
+  const user = useSelector(selectCurrentUser)
   if (user?.role !== 'DOOM_SLAYER') return <Navigate to="/" replace />
   return <Outlet />
 }

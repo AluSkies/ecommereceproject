@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { useCart } from '@/lib/cart'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectCurrentUser, selectIsAuthenticated, selectIsAdmin, selectIsSlayer, logout } from '@/redux/usersSlice'
+import { selectCartItemCount } from '@/redux/cartsSlice'
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const drawerRef = useRef(null)
-  const { user, isAuthenticated, isAdmin, isSlayer, logout } = useAuth()
-  const { itemCount } = useCart()
+  const user = useSelector(selectCurrentUser)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const isAdmin = useSelector(selectIsAdmin)
+  const isSlayer = useSelector(selectIsSlayer)
+  const itemCount = useSelector(selectCartItemCount)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -36,7 +41,7 @@ export function Navbar() {
 
   async function handleLogout() {
     setMenuOpen(false)
-    await logout()
+    await dispatch(logout())
     navigate('/', { replace: true })
   }
 
