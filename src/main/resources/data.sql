@@ -55,7 +55,7 @@ ALTER TABLE order_status_history  AUTO_INCREMENT = 1;
 -- 1) users  (2 rows)
 -- ============================================================================
 INSERT INTO users (user_id, username, email, password, name, last_name, role, registration_date) VALUES
-    (1, 'admin',  'admin@tempus.local',  '$2b$10$q0wnCefXyKZgl.yxt4FPp.Auk3utp1VzpeuO0WIIRn4uO4f5pIznC', 'Admin', 'Tempus', 'ADMIN', CURRENT_TIMESTAMP),
+    (1, 'admin',  'admin@tempus.local',  '$2b$10$iZDStiTiPzRMxr1Ad35Z2e0D4UCjXVhn.ZHHWQIU3xoX.gAPnlgHO', 'Admin', 'Tempus', 'ADMIN', CURRENT_TIMESTAMP),
     (2, 'buyer1', 'buyer1@tempus.local', '$2b$10$uv9Z3ndetq63PV6LxjlZXeur427Y/qW/nvgShEISNBvnw9juGdkJ2', 'Juan',  'Pérez',  'BUYER', CURRENT_TIMESTAMP);
 
 -- ============================================================================

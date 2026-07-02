@@ -1,63 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
-import { apiGet } from '@/lib/api'
-import { mapProduct } from '@/lib/productMapper'
-
-const EMPTY_CATALOG = { watches: [], categories: [] }
-let catalogCache = null
-let catalogRequest = null
-
-function loadCatalogData() {
-  if (catalogCache) return Promise.resolve(catalogCache)
-
-  if (!catalogRequest) {
-    catalogRequest = Promise.all([
-      apiGet('/categories'),
-      apiGet('/products/active'),
-    ])
-      .then(([categories, products]) => {
-        const byCode = new Map(categories.map((c) => [c.code, c]))
-        const watches = products.map((p) => mapProduct(p, byCode))
-        catalogCache = { watches, categories }
-        return catalogCache
-      })
-      .finally(() => {
-        catalogRequest = null
-      })
-  }
-
-  return catalogRequest
-}
+import { useEffect, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+  fetchCatalogThunk,
+  selectWatches,
+  selectCategories,
+  selectCatalogLoading,
+  selectCatalogError,
+} from '@/store/slices/catalogSlice'
 
 function useCatalogData() {
-  const [state, setState] = useState(() => ({
-    data: catalogCache ?? EMPTY_CATALOG,
-    loading: !catalogCache,
-    error: null,
-  }))
+  const dispatch = useDispatch()
+  const watches = useSelector(selectWatches)
+  const categories = useSelector(selectCategories)
+  const loading = useSelector(selectCatalogLoading)
+  const error = useSelector(selectCatalogError)
 
   useEffect(() => {
-    let mounted = true
+    dispatch(fetchCatalogThunk())
+  }, [dispatch])
 
-    loadCatalogData()
-      .then((data) => {
-        if (!mounted) return
-        setState({ data, loading: false, error: null })
-      })
-      .catch((err) => {
-        if (!mounted) return
-        setState({
-          data: EMPTY_CATALOG,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Error desconocido',
-        })
-      })
-
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  return state
+  return { data: { watches, categories }, loading, error }
 }
 
 export function useWatches(filters) {
