@@ -20,7 +20,7 @@ export const fetchCatalogThunk = createAsyncThunk(
       const watches = products.map((p) => mapProduct(p, byCode))
       return { watches, categories }
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -39,7 +39,7 @@ export const refreshCatalogThunk = createAsyncThunk(
       const watches = products.map((p) => mapProduct(p, byCode))
       return { watches, categories }
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -81,7 +81,7 @@ const catalogSlice = createSlice({
       .addCase(fetchCatalogThunk.fulfilled, handleFulfilled)
       .addCase(fetchCatalogThunk.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload
+        state.error = action.payload?.message ?? action.payload
       })
 
       .addCase(refreshCatalogThunk.pending, (state) => {
@@ -91,7 +91,7 @@ const catalogSlice = createSlice({
       .addCase(refreshCatalogThunk.fulfilled, handleFulfilled)
       .addCase(refreshCatalogThunk.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload
+        state.error = action.payload?.message ?? action.payload
       })
   },
 })

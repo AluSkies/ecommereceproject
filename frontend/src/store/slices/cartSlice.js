@@ -11,7 +11,7 @@ export const fetchCartThunk = createAsyncThunk(
       return data
     } catch (err) {
       if (err.status === 404) return null
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -23,7 +23,7 @@ export const addItemThunk = createAsyncThunk(
       const { data } = await axiosClient.post('/cart/items', { customerId, productId, quantity })
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -35,7 +35,7 @@ export const updateItemThunk = createAsyncThunk(
       const { data } = await axiosClient.put(`/cart/${cartId}/items/${productId}`, { quantity })
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -47,7 +47,7 @@ export const removeItemThunk = createAsyncThunk(
       const { data } = await axiosClient.delete(`/cart/${cartId}/items/${productId}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -59,7 +59,7 @@ export const clearCartThunk = createAsyncThunk(
       await axiosClient.delete(`/cart/${cartId}`)
       return null
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -95,7 +95,7 @@ const cartSlice = createSlice({
     }
     const setError = (state, action) => {
       state.loading = false
-      state.error = action.payload
+      state.error = action.payload?.message ?? action.payload
     }
 
     builder
@@ -105,7 +105,7 @@ const cartSlice = createSlice({
         state.loading = false
         state.cart = null
         // 404 = no cart yet, not a real error
-        if (action.payload) state.error = action.payload
+        if (action.payload) state.error = action.payload?.message ?? action.payload
       })
 
       .addCase(addItemThunk.pending, setLoading)

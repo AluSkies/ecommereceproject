@@ -10,7 +10,7 @@ export const fetchMeThunk = createAsyncThunk(
       const { data } = await axiosClient.get('/users/me')
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -22,7 +22,7 @@ export const fetchAllUsersThunk = createAsyncThunk(
       const { data } = await axiosClient.get('/users')
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -34,7 +34,7 @@ export const updateUserThunk = createAsyncThunk(
       const { data } = await axiosClient.put(`/users/${id}`, payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -46,7 +46,7 @@ export const disableUserThunk = createAsyncThunk(
       const { data } = await axiosClient.patch(`/users/${id}/disable`, {})
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -68,7 +68,7 @@ const usersSlice = createSlice({
   },
   extraReducers: (builder) => {
     const pending = (state) => { state.loading = true; state.error = null }
-    const rejected = (state, action) => { state.loading = false; state.error = action.payload }
+    const rejected = (state, action) => { state.loading = false; state.error = action.payload?.message ?? action.payload }
 
     builder
       .addCase(fetchMeThunk.pending, pending)

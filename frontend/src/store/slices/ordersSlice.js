@@ -10,7 +10,7 @@ export const fetchCustomerOrdersThunk = createAsyncThunk(
       const { data } = await axiosClient.get(`/orders/customer/${customerId}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -22,7 +22,7 @@ export const fetchOrderByIdThunk = createAsyncThunk(
       const { data } = await axiosClient.get(`/orders/${orderId}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -34,7 +34,7 @@ export const fetchAllOrdersThunk = createAsyncThunk(
       const { data } = await axiosClient.get('/orders')
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -46,7 +46,7 @@ export const checkoutThunk = createAsyncThunk(
       const { data } = await axiosClient.post('/orders/checkout', payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -58,7 +58,7 @@ export const updateOrderStatusThunk = createAsyncThunk(
       const { data } = await axiosClient.patch(`/orders/${orderId}/status`, { status, note })
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -83,7 +83,7 @@ const ordersSlice = createSlice({
   },
   extraReducers: (builder) => {
     const pending = (state) => { state.loading = true; state.error = null }
-    const rejected = (state, action) => { state.loading = false; state.error = action.payload }
+    const rejected = (state, action) => { state.loading = false; state.error = action.payload?.message ?? action.payload }
 
     builder
       .addCase(fetchCustomerOrdersThunk.pending, pending)

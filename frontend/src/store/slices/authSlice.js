@@ -9,17 +9,17 @@ function loadUser() {
 }
 
 // ─── Thunks ────────────────────────────────────────────────────────────────
+// localStorage ya no se toca aquí — lo maneja store.subscribe() en store.js.
 
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async ({ username, password }, { rejectWithValue }) => {
     try {
       const { data } = await axiosClient.post('/auth/login', { username, password })
-      localStorage.setItem(TOKEN_KEY, data.token)
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user))
-      return data
+      return data // { token, user }
     } catch (err) {
-      return rejectWithValue(err.message)
+      // Pasamos el objeto completo para que la UI pueda leer err.status (401 vs 500)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -29,25 +29,20 @@ export const registerThunk = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await axiosClient.post('/auth/register', payload)
-      localStorage.setItem(TOKEN_KEY, data.token)
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user))
-      return data
+      return data // { token, user }
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
 
 export const logoutThunk = createAsyncThunk(
   'auth/logout',
-  async (_, { rejectWithValue }) => {
+  async () => {
     try {
       await axiosClient.post('/auth/logout')
     } catch {
-      // Ignore 401 on logout
-    } finally {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
+      // Ignoramos 401 en logout — la sesión se limpia igual
     }
   },
 )
@@ -65,50 +60,38 @@ const authSlice = createSlice({
   reducers: {
     updateUser(state, action) {
       state.user = { ...state.user, ...action.payload }
-      localStorage.setItem(USER_KEY, JSON.stringify(state.user))
     },
     clearError(state) {
       state.error = null
     },
   },
   extraReducers: (builder) => {
-    // login
+    const setSession = (state, action) => {
+      state.loading = false
+      state.token = action.payload.token
+      state.user = action.payload.user
+      state.error = null
+    }
+
     builder
-      .addCase(loginThunk.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(loginThunk.fulfilled, (state, action) => {
-        state.loading = false
-        state.token = action.payload.token
-        state.user = action.payload.user
-      })
+      // login
+      .addCase(loginThunk.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(loginThunk.fulfilled, setSession)
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload
+        state.error = action.payload?.message ?? action.payload?.message ?? action.error.message
       })
 
-    // register
-    builder
-      .addCase(registerThunk.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(registerThunk.fulfilled, (state, action) => {
-        state.loading = false
-        state.token = action.payload.token
-        state.user = action.payload.user
-      })
+      // register
+      .addCase(registerThunk.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(registerThunk.fulfilled, setSession)
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload
+        state.error = action.payload?.message ?? action.payload?.message ?? action.error.message
       })
 
-    // logout
-    builder
-      .addCase(logoutThunk.pending, (state) => {
-        state.loading = true
-      })
+      // logout
+      .addCase(logoutThunk.pending, (state) => { state.loading = true })
       .addCase(logoutThunk.fulfilled, (state) => {
         state.loading = false
         state.token = null

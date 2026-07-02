@@ -10,7 +10,7 @@ export const fetchProductByIdThunk = createAsyncThunk(
       const { data } = await axiosClient.get(`/products/${id}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -22,7 +22,7 @@ export const fetchLowStockThunk = createAsyncThunk(
       const { data } = await axiosClient.get(`/products/inventory/low-stock?threshold=${threshold}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -34,7 +34,7 @@ export const fetchOutOfStockThunk = createAsyncThunk(
       const { data } = await axiosClient.get('/products/inventory/out-of-stock')
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -46,7 +46,7 @@ export const createProductThunk = createAsyncThunk(
       const { data } = await axiosClient.post('/products', payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -58,7 +58,7 @@ export const updateProductThunk = createAsyncThunk(
       const { data } = await axiosClient.put(`/products/${id}`, payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -70,7 +70,7 @@ export const updateProductStatusThunk = createAsyncThunk(
       const { data } = await axiosClient.patch(`/products/${id}/status?status=${status}`, {})
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -82,7 +82,7 @@ export const deleteProductThunk = createAsyncThunk(
       await axiosClient.delete(`/products/${id}`)
       return id
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -107,7 +107,7 @@ const productsSlice = createSlice({
   },
   extraReducers: (builder) => {
     const pending = (state) => { state.loading = true; state.error = null }
-    const rejected = (state, action) => { state.loading = false; state.error = action.payload }
+    const rejected = (state, action) => { state.loading = false; state.error = action.payload?.message ?? action.payload }
 
     builder
       .addCase(fetchProductByIdThunk.pending, pending)

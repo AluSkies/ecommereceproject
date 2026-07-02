@@ -10,7 +10,7 @@ export const fetchCategoriesThunk = createAsyncThunk(
       const { data } = await axiosClient.get('/categories')
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -22,7 +22,7 @@ export const fetchCategoryByIdThunk = createAsyncThunk(
       const { data } = await axiosClient.get(`/categories/${id}`)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -34,7 +34,7 @@ export const createCategoryThunk = createAsyncThunk(
       const { data } = await axiosClient.post('/categories', payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -46,7 +46,7 @@ export const updateCategoryThunk = createAsyncThunk(
       const { data } = await axiosClient.put(`/categories/${id}`, payload)
       return data
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -58,7 +58,7 @@ export const deleteCategoryThunk = createAsyncThunk(
       await axiosClient.delete(`/categories/${id}`)
       return id
     } catch (err) {
-      return rejectWithValue(err.message)
+      return rejectWithValue({ message: err.message, status: err.status ?? null })
     }
   },
 )
@@ -83,7 +83,7 @@ const categoriesSlice = createSlice({
   },
   extraReducers: (builder) => {
     const pending = (state) => { state.loading = true; state.error = null }
-    const rejected = (state, action) => { state.loading = false; state.error = action.payload }
+    const rejected = (state, action) => { state.loading = false; state.error = action.payload?.message ?? action.payload }
 
     builder
       .addCase(fetchCategoriesThunk.pending, pending)
