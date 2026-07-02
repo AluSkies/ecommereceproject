@@ -51,3 +51,11 @@ Thumbs.db
 
 ### Entrega (PDF e imágenes — no van al repo) ###
 docs/
+
+### node_modules en raíz (instalar siempre dentro de frontend/) ###
+/node_modules/
+/package.json
+/package-lock.json
+
+### Logs de dev ###
+*.err
