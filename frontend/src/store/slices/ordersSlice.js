@@ -6,60 +6,40 @@ import axiosClient from '../axiosClient'
 export const fetchCustomerOrdersThunk = createAsyncThunk(
   'orders/fetchByCustomer',
   async (customerId, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get(`/orders/customer/${customerId}`)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const fetchOrderByIdThunk = createAsyncThunk(
   'orders/fetchById',
   async (orderId, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get(`/orders/${orderId}`)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const fetchAllOrdersThunk = createAsyncThunk(
   'orders/fetchAll',
   async (_, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get('/orders')
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const checkoutThunk = createAsyncThunk(
   'orders/checkout',
   async (payload, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.post('/orders/checkout', payload)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return data
   },
 )
 
 export const updateOrderStatusThunk = createAsyncThunk(
   'orders/updateStatus',
   async ({ orderId, status, note }, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.patch(`/orders/${orderId}/status`, { status, note })
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 

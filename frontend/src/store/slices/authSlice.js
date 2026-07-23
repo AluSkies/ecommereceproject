@@ -14,36 +14,23 @@ function loadUser() {
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async ({ username, password }, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.post('/auth/login', { username, password })
       return data // { token, user }
-    } catch (err) {
-      // Pasamos el objeto completo para que la UI pueda leer err.status (401 vs 500)
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const registerThunk = createAsyncThunk(
   'auth/register',
   async (payload, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.post('/auth/register', payload)
-      return data // { token, user }
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.post('/auth/register', payload)
+    return data // { token, user }
   },
 )
 
 export const logoutThunk = createAsyncThunk(
   'auth/logout',
   async () => {
-    try {
-      await axiosClient.post('/auth/logout')
-    } catch {
-      // Ignoramos 401 en logout — la sesión se limpia igual
-    }
+    await axiosClient.post('/auth/logout')
   },
 )
 

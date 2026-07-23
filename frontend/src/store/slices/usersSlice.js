@@ -6,48 +6,32 @@ import axiosClient from '../axiosClient'
 export const fetchMeThunk = createAsyncThunk(
   'users/fetchMe',
   async (_, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get('/users/me')
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return data
   },
 )
 
 export const fetchAllUsersThunk = createAsyncThunk(
   'users/fetchAll',
   async (_, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get('/users')
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return data
   },
 )
 
 export const updateUserThunk = createAsyncThunk(
   'users/update',
   async ({ id, payload }, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.put(`/users/${id}`, payload)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return data
   },
 )
 
 export const disableUserThunk = createAsyncThunk(
   'users/disable',
   async (id, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.patch(`/users/${id}/disable`, {})
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return data
   },
 )
 

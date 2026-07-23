@@ -6,60 +6,40 @@ import axiosClient from '../axiosClient'
 export const fetchCategoriesThunk = createAsyncThunk(
   'categories/fetch',
   async (_, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.get('/categories')
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.get('/categories')
+    return data
   },
 )
 
 export const fetchCategoryByIdThunk = createAsyncThunk(
   'categories/fetchById',
   async (id, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.get(`/categories/${id}`)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.get(`/categories/${id}`)
+    return data
   },
 )
 
 export const createCategoryThunk = createAsyncThunk(
   'categories/create',
   async (payload, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.post('/categories', payload)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.post('/categories', payload)
+    return data
   },
 )
 
 export const updateCategoryThunk = createAsyncThunk(
   'categories/update',
   async ({ id, payload }, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.put(`/categories/${id}`, payload)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.put(`/categories/${id}`, payload)
+    return data
   },
 )
 
 export const deleteCategoryThunk = createAsyncThunk(
   'categories/delete',
   async (id, { rejectWithValue }) => {
-    try {
-      await axiosClient.delete(`/categories/${id}`)
-      return id
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    await axiosClient.delete(`/categories/${id}`)
+    return id
   },
 )
 

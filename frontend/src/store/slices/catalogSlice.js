@@ -9,7 +9,6 @@ export const fetchCatalogThunk = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     const { loaded } = getState().catalog
     if (loaded) return null // already cached — skip request
-    try {
       const [categoriesRes, productsRes] = await Promise.all([
         axiosClient.get('/categories'),
         axiosClient.get('/products/active'),
@@ -19,16 +18,12 @@ export const fetchCatalogThunk = createAsyncThunk(
       const byCode = new Map(categories.map((c) => [c.code, c]))
       const watches = products.map((p) => mapProduct(p, byCode))
       return { watches, categories }
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const refreshCatalogThunk = createAsyncThunk(
   'catalog/refresh',
   async (_, { rejectWithValue }) => {
-    try {
       const [categoriesRes, productsRes] = await Promise.all([
         axiosClient.get('/categories'),
         axiosClient.get('/products/active'),
@@ -38,9 +33,6 @@ export const refreshCatalogThunk = createAsyncThunk(
       const byCode = new Map(categories.map((c) => [c.code, c]))
       const watches = products.map((p) => mapProduct(p, byCode))
       return { watches, categories }
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 

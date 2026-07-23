@@ -6,61 +6,40 @@ import axiosClient from '../axiosClient'
 export const fetchCartThunk = createAsyncThunk(
   'cart/fetch',
   async (customerId, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.get(`/cart/customer/${customerId}`)
-      return data
-    } catch (err) {
-      if (err.status === 404) return null
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.get(`/cart/customer/${customerId}`)
+    return data
   },
 )
 
 export const addItemThunk = createAsyncThunk(
   'cart/addItem',
   async ({ customerId, productId, quantity }, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.post('/cart/items', { customerId, productId, quantity })
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.post('/cart/items', { customerId, productId, quantity })
+    return data
   },
 )
 
 export const updateItemThunk = createAsyncThunk(
   'cart/updateItem',
   async ({ cartId, productId, quantity }, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.put(`/cart/${cartId}/items/${productId}`, { quantity })
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.put(`/cart/${cartId}/items/${productId}`, { quantity })
+    return data
   },
 )
 
 export const removeItemThunk = createAsyncThunk(
   'cart/removeItem',
   async ({ cartId, productId }, { rejectWithValue }) => {
-    try {
-      const { data } = await axiosClient.delete(`/cart/${cartId}/items/${productId}`)
-      return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    const { data } = await axiosClient.delete(`/cart/${cartId}/items/${productId}`)
+    return data
   },
 )
 
 export const clearCartThunk = createAsyncThunk(
   'cart/clear',
   async (cartId, { rejectWithValue }) => {
-    try {
-      await axiosClient.delete(`/cart/${cartId}`)
-      return null
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    await axiosClient.delete(`/cart/${cartId}`)
+    return null
   },
 )
 

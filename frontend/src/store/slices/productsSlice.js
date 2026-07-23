@@ -6,84 +6,56 @@ import axiosClient from '../axiosClient'
 export const fetchProductByIdThunk = createAsyncThunk(
   'products/fetchById',
   async (id, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get(`/products/${id}`)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const fetchLowStockThunk = createAsyncThunk(
   'products/fetchLowStock',
   async (threshold = 5, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get(`/products/inventory/low-stock?threshold=${threshold}`)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const fetchOutOfStockThunk = createAsyncThunk(
   'products/fetchOutOfStock',
   async (_, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.get('/products/inventory/out-of-stock')
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const createProductThunk = createAsyncThunk(
   'products/create',
   async (payload, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.post('/products', payload)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const updateProductThunk = createAsyncThunk(
   'products/update',
   async ({ id, payload }, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.put(`/products/${id}`, payload)
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const updateProductStatusThunk = createAsyncThunk(
   'products/updateStatus',
   async ({ id, status }, { rejectWithValue }) => {
-    try {
       const { data } = await axiosClient.patch(`/products/${id}/status?status=${status}`, {})
       return data
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
   },
 )
 
 export const deleteProductThunk = createAsyncThunk(
   'products/delete',
   async (id, { rejectWithValue }) => {
-    try {
       await axiosClient.delete(`/products/${id}`)
-      return id
-    } catch (err) {
-      return rejectWithValue({ message: err.message, status: err.status ?? null })
-    }
+    return id
   },
 )
 
