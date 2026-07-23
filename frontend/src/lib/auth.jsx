@@ -1,116 +1,69 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { apiPost, getStoredToken, setStoredToken, ApiError } from './api'
+import { useDispatch, useSelector } from 'react-redux'
+import { useCallback } from 'react'
+import {
+  loginThunk,
+  registerThunk,
+  logoutThunk,
+  updateUser,
+  selectUser,
+  selectToken,
+  selectIsAuthenticated,
+  selectIsAdmin,
+  selectIsSlayer,
+  selectAuthLoading,
+  selectAuthError,
+} from '@/store/slices/authSlice'
 
 /**
- * @typedef {'ADMIN'|'BUYER'} Role
+ * Drop-in replacement for the old Context-based useAuth().
+ * Same public API — now backed by Redux store.
  */
+export function useAuth() {
+  const dispatch = useDispatch()
+  const user = useSelector(selectUser)
+  const token = useSelector(selectToken)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const isAdmin = useSelector(selectIsAdmin)
+  const isSlayer = useSelector(selectIsSlayer)
+  const loading = useSelector(selectAuthLoading)
+  const error = useSelector(selectAuthError)
 
-/**
- * @typedef {Object} AuthUser
- * @property {number} id
- * @property {string} email
- * @property {Role} role
- * @property {string} [firstName]
- * @property {string} [lastName]
- * @property {string} [phone]
- * @property {string} [line1]
- * @property {string} [line2]
- * @property {string} [city]
- * @property {string} [region]
- * @property {string} [postalCode]
- * @property {string} [countryCode]
- */
+  const login = useCallback(
+    (username, password) => dispatch(loginThunk({ username, password })).unwrap(),
+    [dispatch],
+  )
 
-/**
- * @typedef {Object} RegisterPayload
- * @property {string} email
- * @property {string} password
- * @property {string} firstName
- * @property {string} lastName
- * @property {string} [phone]
- * @property {string} line1
- * @property {string} [line2]
- * @property {string} city
- * @property {string} [region]
- * @property {string} postalCode
- * @property {string} countryCode
- */
+  const register = useCallback(
+    (payload) => dispatch(registerThunk(payload)).unwrap(),
+    [dispatch],
+  )
 
-const USER_STORAGE_KEY = 'tempus.user'
+  const logout = useCallback(
+    () => dispatch(logoutThunk()).unwrap(),
+    [dispatch],
+  )
 
-const AuthContext = createContext(undefined)
+  const updateUserData = useCallback(
+    (updated) => dispatch(updateUser(updated)),
+    [dispatch],
+  )
 
-function loadStoredUser() {
-  const raw = localStorage.getItem(USER_STORAGE_KEY)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
+  return {
+    user,
+    token,
+    isAuthenticated,
+    isAdmin,
+    isSlayer,
+    loading,
+    error,
+    login,
+    register,
+    logout,
+    updateUser: updateUserData,
   }
 }
 
+// No-op provider kept for backwards compatibility with any remaining imports
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => getStoredToken())
-  const [user, setUser] = useState(() => loadStoredUser())
-
-  useEffect(() => {
-    if (user) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
-    else localStorage.removeItem(USER_STORAGE_KEY)
-  }, [user])
-
-  const login = useCallback(async (username, password) => {
-    const res = await apiPost('/auth/login', { username, password })
-    setStoredToken(res.token)
-    setToken(res.token)
-    setUser(res.user)
-  }, [])
-
-  const register = useCallback(async (payload) => {
-    const res = await apiPost('/auth/register', payload)
-    setStoredToken(res.token)
-    setToken(res.token)
-    setUser(res.user)
-  }, [])
-
-  const updateUser = useCallback((updated) => {
-    // Refresca el usuario en contexto + localStorage (p. ej. tras editar el perfil).
-    setUser((prev) => ({ ...prev, ...updated }))
-  }, [])
-
-  const logout = useCallback(async () => {
-    try {
-      await apiPost('/auth/logout', {})
-    } catch (err) {
-      if (!(err instanceof ApiError) || err.status !== 401) {
-        console.warn('Logout request failed', err)
-      }
-    }
-    setStoredToken(null)
-    setToken(null)
-    setUser(null)
-  }, [])
-
-  const value = useMemo(
-    () => ({
-      user,
-      token,
-      isAuthenticated: Boolean(token),
-      isAdmin: user?.role === 'ADMIN',
-      isSlayer: user?.role === 'DOOM_SLAYER',
-      login,
-      register,
-      logout,
-      updateUser
-    }),
-    [user, token, login, register, logout, updateUser],
-  )
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
-  return ctx
+  return children
 }

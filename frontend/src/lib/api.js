@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4002/api/v1'
+import axiosClient from '@/store/axiosClient'
 
 const TOKEN_STORAGE_KEY = 'tempus.token'
 
@@ -20,123 +20,65 @@ export function setStoredToken(token) {
   else localStorage.removeItem(TOKEN_STORAGE_KEY)
 }
 
-function authHeaders() {
-  const token = getStoredToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
+function toApiError(err) {
+  const status = err.status ?? err.response?.status
+  const message = err.message ?? 'Error desconocido'
+  const body = err.body ?? err.response?.data
+  return new ApiError(status, message, body)
 }
 
-async function parseError(res, path) {
-  let body
-  let message = `Request ${path} failed with ${res.status}`
-  try {
-    body = await res.json()
-    if (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string') {
-      message = body.message
-    } else if (body && typeof body === 'object' && 'mensaje' in body && typeof body.mensaje === 'string') {
-      message = body.mensaje
-    }
-  } catch {
-    // body was not JSON — keep default message
-  }
-  return new ApiError(res.status, message, body)
-}
-
-/**
- * @param {string} path
- * @param {AbortSignal} [signal]
- * @returns {Promise<any>}
- */
 export async function apiGet(path, signal) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { Accept: 'application/json', ...authHeaders() },
-    signal,
-  })
-  if (!res.ok) {
-    throw await parseError(res, `GET ${path}`)
+  try {
+    const { data } = await axiosClient.get(path, { signal })
+    return data
+  } catch (err) {
+    throw toApiError(err)
   }
-  return res.json()
 }
 
-/**
- * Same as apiGet but returns null when the resource is absent.
- * @param {string} path
- * @param {AbortSignal} [signal]
- * @returns {Promise<any|null>}
- */
 export async function apiGetNullable(path, signal) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { Accept: 'application/json', ...authHeaders() },
-    signal,
-  })
-  if (res.status === 204 || res.status === 404) return null
-  if (!res.ok) {
-    throw await parseError(res, `GET ${path}`)
+  try {
+    const { data } = await axiosClient.get(path, { signal })
+    return data
+  } catch (err) {
+    if (err.status === 404 || err.status === 204) return null
+    throw toApiError(err)
   }
-  return res.json()
 }
 
-async function requestWithBody(method, path, body, signal) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...authHeaders(),
-    },
-    body: JSON.stringify(body),
-    signal,
-  })
-  if (!res.ok) {
-    throw await parseError(res, `${method} ${path}`)
+export async function apiPost(path, body, signal) {
+  try {
+    const { data } = await axiosClient.post(path, body, { signal })
+    return data
+  } catch (err) {
+    throw toApiError(err)
   }
-  if (res.status === 204) return undefined
-  return res.json()
 }
 
-/**
- * @param {string} path
- * @param {unknown} body
- * @param {AbortSignal} [signal]
- * @returns {Promise<any>}
- */
-export function apiPost(path, body, signal) {
-  return requestWithBody('POST', path, body, signal)
+export async function apiPut(path, body, signal) {
+  try {
+    const { data } = await axiosClient.put(path, body, { signal })
+    return data
+  } catch (err) {
+    throw toApiError(err)
+  }
 }
 
-/**
- * @param {string} path
- * @param {unknown} body
- * @param {AbortSignal} [signal]
- * @returns {Promise<any>}
- */
-export function apiPut(path, body, signal) {
-  return requestWithBody('PUT', path, body, signal)
+export async function apiPatch(path, body, signal) {
+  try {
+    const { data } = await axiosClient.patch(path, body, { signal })
+    return data
+  } catch (err) {
+    throw toApiError(err)
+  }
 }
 
-/**
- * @param {string} path
- * @param {unknown} body
- * @param {AbortSignal} [signal]
- * @returns {Promise<any>}
- */
-export function apiPatch(path, body, signal) {
-  return requestWithBody('PATCH', path, body, signal)
-}
-
-/**
- * @param {string} path
- * @param {AbortSignal} [signal]
- * @returns {Promise<any>}
- */
 export async function apiDelete(path, signal) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'DELETE',
-    headers: { Accept: 'application/json', ...authHeaders() },
-    signal,
-  })
-  if (!res.ok) {
-    throw await parseError(res, `DELETE ${path}`)
+  try {
+    const res = await axiosClient.delete(path, { signal })
+    if (res.status === 204) return undefined
+    return res.data
+  } catch (err) {
+    throw toApiError(err)
   }
-  if (res.status === 204) return undefined
-  return res.json()
 }
