@@ -14,10 +14,29 @@ axiosClient.interceptors.request.use((config) => {
   return config
 })
 
+// Inyección de dependencia para evitar el ciclo axiosClient → store → slices →
+// axiosClient. store.js registra el handler apenas crea el store.
+let onUnauthorized = null
+export function setUnauthorizedHandler(fn) {
+  onUnauthorized = fn
+}
+
+// Acá un 401 es la respuesta esperada (credenciales inválidas), no una sesión
+// vencida: no hay que desloguear ni tapar el mensaje del formulario.
+const AUTH_PATHS = ['/auth/login', '/auth/register']
+
 axiosClient.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err.response?.status
+    const url = err.config?.url ?? ''
+
+    // Solo 401. Un 403 es "autenticado pero sin permiso" (p. ej. comprador
+    // pegándole a un endpoint de admin) y desloguear ahí sería incorrecto.
+    if (status === 401 && !AUTH_PATHS.some((p) => url.includes(p))) {
+      onUnauthorized?.()
+    }
+
     const message =
       err.response?.data?.message ??
       err.response?.data?.mensaje ??

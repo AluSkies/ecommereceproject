@@ -51,6 +51,15 @@ const authSlice = createSlice({
     clearError(state) {
       state.error = null
     },
+    // Token vencido o inválido detectado por el interceptor 401. Es un reducer
+    // sincrónico a propósito: logoutThunk hace POST /auth/logout, que con el
+    // token muerto volvería a dar 401 y realimentaría el interceptor.
+    sessionExpired(state) {
+      state.token = null
+      state.user = null
+      state.loading = false
+      state.error = 'Tu sesión expiró. Iniciá sesión de nuevo.'
+    },
   },
   extraReducers: (builder) => {
     const setSession = (state, action) => {
@@ -93,7 +102,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { updateUser, clearError } = authSlice.actions
+export const { updateUser, clearError, sessionExpired } = authSlice.actions
 
 // ─── Selectors ─────────────────────────────────────────────────────────────
 

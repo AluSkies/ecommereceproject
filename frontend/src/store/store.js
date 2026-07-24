@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
-import authReducer from './slices/authSlice'
+import { setUnauthorizedHandler } from './axiosClient'
+import authReducer, { sessionExpired } from './slices/authSlice'
 import cartReducer from './slices/cartSlice'
 import catalogReducer from './slices/catalogSlice'
 import ordersReducer from './slices/ordersSlice'
@@ -53,6 +54,15 @@ store.subscribe(() => {
 
   if (auth.user) localStorage.setItem(USER_KEY, JSON.stringify(auth.user))
   else localStorage.removeItem(USER_KEY)
+})
+
+// Un 401 fuera del login significa token vencido/inválido. Limpiamos la sesión
+// en el store y el subscriber de arriba borra localStorage — sigue habiendo un
+// solo punto de escritura. Al quedar `token` en null, selectIsAuthenticated pasa
+// a false y Cart/Checkout redirigen solos a /login.
+// El guard evita despachar N veces si varias requests fallan a la vez.
+setUnauthorizedHandler(() => {
+  if (store.getState().auth.token) store.dispatch(sessionExpired())
 })
 
 export default store

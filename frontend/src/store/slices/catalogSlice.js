@@ -6,18 +6,25 @@ import { mapProduct } from '@/lib/productMapper'
 
 export const fetchCatalogThunk = createAsyncThunk(
   'catalog/fetch',
-  async (_, { getState, rejectWithValue }) => {
-    const { loaded } = getState().catalog
-    if (loaded) return null // already cached — skip request
-      const [categoriesRes, productsRes] = await Promise.all([
-        axiosClient.get('/categories'),
-        axiosClient.get('/products/active'),
-      ])
-      const categories = categoriesRes.data
-      const products = productsRes.data
-      const byCode = new Map(categories.map((c) => [c.code, c]))
-      const watches = products.map((p) => mapProduct(p, byCode))
-      return { watches, categories }
+  async () => {
+    const [categoriesRes, productsRes] = await Promise.all([
+      axiosClient.get('/categories'),
+      axiosClient.get('/products/active'),
+    ])
+    const categories = categoriesRes.data
+    const products = productsRes.data
+    const byCode = new Map(categories.map((c) => [c.code, c]))
+    const watches = products.map((p) => mapProduct(p, byCode))
+    return { watches, categories }
+  },
+  {
+    // Se evalúa ANTES de despachar `pending`, así que ni siquiera aparece en
+    // DevTools cuando se descarta. `loading` corta la ráfaga de dispatches del
+    // mismo tick (varios hooks de catálogo + doble montaje de StrictMode).
+    condition: (_, { getState }) => {
+      const { loaded, loading } = getState().catalog
+      return !loaded && !loading
+    },
   },
 )
 
